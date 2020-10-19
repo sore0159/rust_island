@@ -1,7 +1,7 @@
 use std::fmt::Write;
 use termion::color;
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Style {
     pub deco: Decoration,
     pub fg: Color,
@@ -11,6 +11,11 @@ pub struct Style {
 impl Style {
     pub fn new() -> Self {
         Default::default()
+    }
+    pub fn set_to(&mut self, other: &Style) {
+        self.deco = other.deco.clone();
+        self.fg = other.fg.clone();
+        self.bg = other.bg.clone();
     }
 }
 
@@ -24,7 +29,7 @@ impl Default for Style {
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Decoration {
     None,
     Bold,
@@ -38,6 +43,7 @@ pub enum Color {
     Red,
     Blue,
     Green,
+    Rgb(u8, u8, u8),
 }
 
 type WriteErr = std::result::Result<(), std::fmt::Error>;
@@ -68,6 +74,7 @@ impl Color {
             Color::Red => write!(w, "{}", color::Fg(color::Red)),
             Color::Blue => write!(w, "{}", color::Fg(color::Blue)),
             Color::Green => write!(w, "{}", color::Fg(color::Green)),
+            Color::Rgb(r, g, b) => write!(w, "{}", color::Fg(color::Rgb(*r, *g, *b))),
         }
     }
     pub fn start_bg(&self, mut w: impl Write) -> WriteErr {
@@ -77,6 +84,7 @@ impl Color {
             Color::Red => write!(w, "{}", color::Bg(color::Red)),
             Color::Blue => write!(w, "{}", color::Bg(color::Blue)),
             Color::Green => write!(w, "{}", color::Bg(color::Green)),
+            Color::Rgb(r, g, b) => write!(w, "{}", color::Bg(color::Rgb(*r, *g, *b))),
         }
     }
 }

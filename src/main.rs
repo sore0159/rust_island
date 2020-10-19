@@ -9,5 +9,6 @@ pub mod ui;
 
 fn main() {
     //let g = data::mockup::gen_mockup();
-    ui::terminal::mockup::draw_boxes().unwrap();
+    let mock = ui::terminal::mockup::Mockup1::new();
+    ui::terminal::run_ui(mock).unwrap()
 }

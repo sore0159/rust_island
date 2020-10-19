@@ -1,4 +1,4 @@
-use super::cell::Rect;
+use super::rect::Rect;
 use super::style::Color;
 use super::style::StyleMod;
 
