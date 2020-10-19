@@ -6,7 +6,7 @@ pub mod style;
 pub mod text;
 
 pub trait SyncTermUI {
-    fn to_draw(&mut self) -> &str;
+    fn to_draw(&self) -> &str;
     fn parse(&mut self, key: termion::event::Key) -> bool;
 }
 
