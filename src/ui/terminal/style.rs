@@ -17,6 +17,13 @@ impl Style {
         self.fg = other.fg.clone();
         self.bg = other.bg.clone();
     }
+    pub fn to_mod(&self) -> StyleMod {
+        StyleMod {
+            deco: Some(self.deco.clone()),
+            fg: Some(self.fg.clone()),
+            bg: Some(self.fg.clone()),
+        }
+    }
 }
 
 impl Default for Style {
@@ -89,7 +96,7 @@ impl Color {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StyleMod {
     pub deco: Option<Decoration>,
     pub fg: Option<Color>,

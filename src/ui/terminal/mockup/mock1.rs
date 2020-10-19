@@ -38,7 +38,7 @@ impl Mockup1 {
         m.bg = Some(style::Color::White);
         rect1.apply_str((2, 2), "Box One", None);
         let mut t2 = text::Text::new("    Box Two    ");
-        t2.mod_style(&m);
+        t2.style_mods = m.clone();
         t2.start = (2, 2);
 
         let mut f3 = text::Fitter::default().middle();
@@ -46,7 +46,7 @@ impl Mockup1 {
         let mut t3 = text::Text::new("12Box6Three23");
         t3.fit(&f3, 20);
         //println!("{:?}", t3);
-        t3.mod_style(&m);
+        t3.style_mods = m.clone();
         t3.start = (w / 2 - 5, 4);
         rect2.apply_text(&t2);
         rect3.apply_text(&t3);

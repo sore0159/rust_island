@@ -3,22 +3,18 @@ use super::style;
 #[derive(Debug)]
 pub struct Text {
     pub val: String,
-    pub style: style::Style,
     pub start: (u16, u16),
+    pub style_mods: style::StyleMod,
 }
 
 impl Text {
     pub fn new(s: impl Into<String>) -> Self {
         Text {
             val: s.into(),
-            style: Default::default(),
+            style_mods: style::StyleMod::new(),
             start: (1, 1),
         }
     }
-    pub fn mod_style(&mut self, m: &style::StyleMod) {
-        m.apply(&mut self.style);
-    }
-
     pub fn trim(&mut self) {
         self.val = self.val.trim().to_string();
     }

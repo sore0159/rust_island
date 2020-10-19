@@ -2,13 +2,14 @@ use std::fmt::Display;
 use termion::cursor;
 
 use super::cell::Cell;
-use super::style::StyleMod;
+use super::style::{Style, StyleMod};
 use super::text::Text;
 
 pub struct Rect {
     pub origin: (u16, u16),
     pub size: (u16, u16),
     pub cells: Vec<Vec<Cell>>,
+    pub default_style: Style,
 }
 
 impl Rect {
@@ -28,6 +29,7 @@ impl Rect {
             origin: origin,
             size: (w, h),
             cells: rows,
+            default_style: default.style,
         }
     }
     // external 1,1 based coords but since origin is too it's fine
@@ -51,34 +53,38 @@ impl Rect {
             .get_mut(coord.1 as usize - 1)
             .and_then(|row| row.get_mut(coord.0 as usize - 1))
     }
+    pub fn write_str(&mut self, start: (u16, u16), text: &str) {
+        self.apply_str(start, text, Some(&self.default_style.to_mod()));
+    }
 
     // Assumes text can fit, sep utils for wrapping/sizing text
     pub fn apply_str(&mut self, start: (u16, u16), text: &str, m: Option<&StyleMod>) {
         for (i, ch) in text.chars().enumerate() {
-            let mut cell = self.get_mut((start.0 + i as u16, start.1)).unwrap();
+            let cell = self.get_mut((start.0 + i as u16, start.1)).unwrap();
             if let Some(m) = m {
                 m.apply(&mut cell.style);
             }
             cell.val = ch;
         }
     }
-    pub fn mod_cells(&mut self, start: (u16, u16), len: u16, m: &StyleMod) {
+    pub fn mod_style(&mut self, start: (u16, u16), len: u16, m: &StyleMod) {
         for i in 0..len {
             let cell = self.get_mut((start.0 + i as u16, start.1)).unwrap();
             m.apply(&mut cell.style);
         }
     }
-    pub fn clear_style(&mut self, start: (u16, u16), len: u16) {
-        let m = StyleMod::default();
-        self.mod_cells(start, len, &m);
+    pub fn reset_style(&mut self, start: (u16, u16), len: u16) {
+        self.mod_style(start, len, &self.default_style.to_mod());
     }
     pub fn apply_text(&mut self, text: &Text) {
+        let st = self.default_style.clone();
         for (i, ch) in text.val.chars().enumerate() {
             let mut cell = self
                 .get_mut((text.start.0 + i as u16, text.start.1))
                 .unwrap();
             cell.val = ch;
-            cell.style.set_to(&text.style);
+            cell.style.set_to(&st);
+            text.style_mods.apply(&mut cell.style);
         }
     }
 }

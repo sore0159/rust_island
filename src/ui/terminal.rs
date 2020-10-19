@@ -4,10 +4,13 @@ pub mod mockup;
 pub mod rect;
 pub mod style;
 pub mod text;
+pub mod widget;
+
+pub use termion::event::Key;
 
 pub trait SyncTermUI {
     fn to_draw(&self) -> &str;
-    fn parse(&mut self, key: termion::event::Key) -> bool;
+    fn parse(&mut self, key: Key) -> bool;
 }
 
 use std::io::{stdin, stdout, Write};
