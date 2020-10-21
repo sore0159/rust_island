@@ -1,9 +1,7 @@
-pub mod border;
 pub mod cell;
-pub mod mockup;
+pub mod decorations;
 pub mod rect;
 pub mod style;
-pub mod text;
 pub mod widget;
 
 pub use termion::event::Key;
@@ -14,12 +12,13 @@ pub trait SyncTermUI {
 }
 
 use std::io::{stdin, stdout, Write};
-use termion::clear;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::screen::AlternateScreen;
+use termion::{clear, cursor::HideCursor};
 pub fn run_ui(mut ui: impl SyncTermUI) -> Result<(), Box<dyn std::error::Error>> {
-    let mut stdout = AlternateScreen::from(stdout().into_raw_mode()?);
+    let stdout = AlternateScreen::from(stdout().into_raw_mode()?);
+    let mut stdout = HideCursor::from(stdout);
     write!(stdout, "{}", clear::All)?;
     write!(stdout, "{}", ui.to_draw())?;
     stdout.flush()?;
@@ -35,5 +34,14 @@ pub fn run_ui(mut ui: impl SyncTermUI) -> Result<(), Box<dyn std::error::Error>>
     Ok(())
 }
 
-//impl std::fmt::Display for T {
-//fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+pub type FailString = String;
+
+impl SyncTermUI for FailString {
+    fn to_draw(&self) -> &str {
+        println!("{}", self);
+        ""
+    }
+    fn parse(&mut self, _key: Key) -> bool {
+        return true;
+    }
+}

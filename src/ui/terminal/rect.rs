@@ -1,9 +1,11 @@
 use std::fmt::Display;
 use termion::cursor;
 
-use super::cell::Cell;
-use super::style::{Style, StyleMod};
-use super::text::Text;
+use crate::ui::terminal::{
+    cell::Cell,
+    decorations::text::Text,
+    style::{Style, StyleMod},
+};
 
 pub struct Rect {
     pub origin: (u16, u16),
@@ -85,6 +87,14 @@ impl Rect {
             cell.val = ch;
             cell.style.set_to(&st);
             text.style_mods.apply(&mut cell.style);
+        }
+    }
+    pub fn clean(&mut self) {
+        for line in self.cells.iter_mut() {
+            for cell in line {
+                cell.val = ' ';
+                cell.style.set_to(&self.default_style);
+            }
         }
     }
 }

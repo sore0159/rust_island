@@ -21,7 +21,7 @@ impl Style {
         StyleMod {
             deco: Some(self.deco.clone()),
             fg: Some(self.fg.clone()),
-            bg: Some(self.fg.clone()),
+            bg: Some(self.bg.clone()),
         }
     }
 }

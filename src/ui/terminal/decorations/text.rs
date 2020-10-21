@@ -1,4 +1,4 @@
-use super::style;
+use crate::ui::terminal::style;
 
 #[derive(Debug)]
 pub struct Text {
@@ -8,11 +8,14 @@ pub struct Text {
 }
 
 impl Text {
-    pub fn new(s: impl Into<String>) -> Self {
+    pub fn from_str(s: impl Into<String>) -> Self {
+        Self::new(s, (1, 1))
+    }
+    pub fn new(s: impl Into<String>, start: (u16, u16)) -> Self {
         Text {
             val: s.into(),
             style_mods: style::StyleMod::new(),
-            start: (1, 1),
+            start: start,
         }
     }
     pub fn trim(&mut self) {
@@ -36,7 +39,7 @@ pub struct Fitter {
     pub truncate: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Alignment {
     Left,
     Right,

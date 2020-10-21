@@ -1,7 +1,11 @@
 use termion::event::Key;
 use termion::terminal_size;
 
-use crate::ui::terminal::{self, border, rect, style, text};
+use crate::ui::terminal::{
+    self,
+    decorations::{border, text},
+    rect, style,
+};
 
 use border::Borders;
 use rect::Rect;
@@ -37,17 +41,15 @@ impl Mockup1 {
         m.fg = Some(style::Color::Black);
         m.bg = Some(style::Color::White);
         rect1.apply_str((2, 2), "Box One", None);
-        let mut t2 = text::Text::new("    Box Two    ");
+        let mut t2 = text::Text::new("    Box Two    ", (2, 2));
         t2.style_mods = m.clone();
-        t2.start = (2, 2);
 
         let mut f3 = text::Fitter::default().middle();
         f3.val = '-';
-        let mut t3 = text::Text::new("12Box6Three23");
+        let mut t3 = text::Text::new("12Box6Three23", (w / 2 - 5, 4));
         t3.fit(&f3, 20);
         //println!("{:?}", t3);
         t3.style_mods = m.clone();
-        t3.start = (w / 2 - 5, 4);
         rect2.apply_text(&t2);
         rect3.apply_text(&t3);
         bdr1.draw(&mut rect1);
