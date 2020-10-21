@@ -29,6 +29,7 @@ pub fn new_mock3() -> impl SyncTermUI {
     let i = w4.add_title("B4 Life", 40, 3, true, Some(Flair::VDiamond1));
     //w4.title.as_mut().unwrap().force_fg(250, 250, 250);
     w4.mod_title_flair(Flair::VDiamond1, i);
+    w4.focusable = false;
 
     w1.borders.bars.push(Bar::new(25));
     w1.borders.add_bar(25, false, 0, 0);
@@ -63,8 +64,10 @@ pub fn new_mock3() -> impl SyncTermUI {
         for line in mock_text().lines() {
             tl1.add_event(line);
         }
+        //break;
     }
     tl1.add_event(mock_text().repeat(10));
+    //tl1.add_event(mock_text());
 
     let mut builder = WidgetUIBuilder::new();
     builder.add_widget(tl1);
@@ -77,7 +80,10 @@ pub fn new_mock3() -> impl SyncTermUI {
         Some(Key::Char('2')),
         Some(Key::Char('3')),
     ];
-    builder.cycle_focus_keys[2] = None;
+    //builder.cycle_focus_keys[2] = None;
+    builder.cycle_focus_keys[2] = Some(Key::Char('\t'));
+    builder.cycle_focus_keys[0] = Some(Key::Left);
+    builder.cycle_focus_keys[1] = Some(Key::Right);
 
     let ui = builder.build(0);
     ui

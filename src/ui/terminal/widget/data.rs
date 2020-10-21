@@ -14,6 +14,7 @@ pub struct WidgetData {
     pub selected: Vec<((u16, u16), u16)>,
     pub b_styles: [(StyleMod, BorderType); 2],
     pub i_styles: WidgetStyle,
+    pub focusable: bool,
 }
 
 impl WidgetData {
@@ -33,6 +34,7 @@ impl WidgetData {
                 (Default::default(), BorderType::Thick),
             ],
             i_styles: Default::default(),
+            focusable: true,
         }
     }
 
@@ -110,13 +112,13 @@ impl WidgetData {
 }
 
 impl Widget for WidgetData {
-    fn start(&mut self) -> &str {
+    fn start(&mut self) -> (&str, bool) {
         self.set_focus(false);
         for text in &self.texts {
             self.rect.apply_text(text);
         }
         self.gen_drawstring();
-        &self.updates
+        (&self.updates, self.focusable)
     }
     fn gain_focus(&mut self) -> &str {
         self.set_focus(true);

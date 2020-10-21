@@ -7,6 +7,7 @@ pub struct WidgetUIBuilder {
     pub quick_focus_keys: Vec<Option<Key>>,
     pub cycle_focus_keys: [Option<Key>; 3],
     pub widgets: Vec<Box<dyn Widget>>,
+    pub focusable: Vec<bool>,
     pub cur_focus: usize,
     pub update_str: String,
 }
@@ -18,6 +19,7 @@ impl WidgetUIBuilder {
             quick_focus_keys: Vec::new(),
             cycle_focus_keys: [None, None, Some(Key::Char(' '))],
             widgets: Vec::new(),
+            focusable: Vec::new(),
             update_str: String::new(),
             cur_focus: 0,
         }
@@ -39,16 +41,18 @@ impl WidgetUIBuilder {
     }
     pub fn add_widget(&mut self, w: impl Widget + 'static) -> usize {
         self.widgets.push(Box::new(w));
+        self.focusable.push(true);
         self.widgets.len() - 1
     }
     pub fn build(mut self, init_focus: usize) -> WidgetUI {
         self.cur_focus = init_focus;
         for (i, w) in self.widgets.iter_mut().enumerate() {
+            let (s, f) = w.start();
+            self.focusable[i] = f;
             if i == init_focus {
-                w.start();
                 write!(self.update_str, "{}", w.gain_focus()).unwrap();
             } else {
-                write!(self.update_str, "{}", w.start()).unwrap();
+                write!(self.update_str, "{}", s).unwrap();
             }
         }
         WidgetUI(self)
@@ -79,26 +83,49 @@ impl SyncTermUI for WidgetUI {
         for (i, k) in self.0.cycle_focus_keys.iter().enumerate() {
             if k.as_ref() == Some(&key) {
                 if ln > 1 {
+                    let mut next: Option<usize> = None;
                     match i {
                         0 => {
-                            if self.0.cur_focus != 0 {
-                                self.0.stop_cur_focus();
-                                self.0.start_focus(self.0.cur_focus - 1);
+                            for j in 1..self.0.focusable.len() {
+                                let j: isize = self.0.cur_focus as isize - j as isize;
+                                let j: usize = if j < 0 {
+                                    break;
+                                //self.0.focusable.len() + (-j) as usize
+                                } else {
+                                    j as usize
+                                };
+                                if self.0.focusable[j] {
+                                    next = Some(j);
+                                    break;
+                                }
                             }
                         }
                         1 => {
-                            if self.0.cur_focus != ln - 1 {
-                                self.0.stop_cur_focus();
-                                self.0.start_focus(self.0.cur_focus + 1);
+                            for j in 1..self.0.focusable.len() {
+                                let j = self.0.cur_focus + j;
+                                if j >= self.0.focusable.len() {
+                                    break;
+                                }
+                                if self.0.focusable[j] {
+                                    next = Some(j);
+                                    break;
+                                }
                             }
                         }
                         _ => {
-                            self.0.stop_cur_focus();
-                            if self.0.cur_focus == ln - 1 {
-                                self.0.start_focus(0);
-                            } else {
-                                self.0.start_focus(self.0.cur_focus + 1);
+                            for j in 1..self.0.focusable.len() {
+                                let j = (self.0.cur_focus + j) % self.0.focusable.len();
+                                if self.0.focusable[j] {
+                                    next = Some(j);
+                                    break;
+                                }
                             }
+                        }
+                    }
+                    if let Some(j) = next {
+                        if j != self.0.cur_focus {
+                            self.0.stop_cur_focus();
+                            self.0.start_focus(j);
                         }
                     }
                 }
