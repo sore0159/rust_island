@@ -27,7 +27,7 @@ impl TextLog {
         TextLog {
             w_data: wd,
             size: (w as usize, h as usize),
-            padding: (0, 0),
+            padding: (1, 4),
             log: Vec::new(),
             last: Vec::new(),
             scroll_val: 0,
@@ -38,11 +38,11 @@ impl TextLog {
     }
 
     pub fn adjust_rect(&mut self) {
-        self.adjust_rect_part1();
+        self.draw_log();
         self.w_data.apply_border();
         self.draw_scrollbar();
     }
-    pub fn adjust_rect_part1(&mut self) {
+    pub fn draw_log(&mut self) {
         use title::Flair;
         self.w_data.borders.bars.truncate(4);
         self.w_data.titles.truncate(self.keep_titles);
@@ -300,6 +300,15 @@ impl TextLog {
         if self.scrollbar.len < 4 {
             return;
         }
+        match self.padding.1 {
+            0 => return,
+            1 | 2 => self.scrollbar.start.0 = self.size.0 as u16 + 1,
+            _ => self.scrollbar.start.0 = self.size.0 as u16,
+        }
+        if self.padding.1 == 0 {
+            return;
+        }
+
         if let Some(cl) = &self.w_data.borders.mods.fg {
             self.scrollbar.style.fg = cl.clone();
         }
@@ -320,7 +329,7 @@ impl Widget for TextLog {
         &self.w_data.updates
     }
     fn lose_focus(&mut self) -> &str {
-        self.w_data.lose_focus();
+        self.w_data.set_focus(false);
         self.draw_scrollbar();
         self.w_data.gen_drawstring();
         &self.w_data.updates
@@ -369,8 +378,7 @@ impl Widget for TextLog {
                     self.w_data.gen_drawstring();
                 }
             }
-            //_ => {},
-            _ => println!("GOT:{:?}", key),
+            _ => {} //_ => println!("GOT:{:?}", key),
         }
         &self.w_data.updates
     }

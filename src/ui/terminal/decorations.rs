@@ -1,5 +1,6 @@
 pub mod border;
 pub mod scrollbar;
+pub mod selections;
 pub mod text;
 pub mod title;
 
