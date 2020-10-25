@@ -1,6 +1,7 @@
 use crate::ui::terminal::decorations::text::Text;
 use crate::ui::terminal::rect::Rect;
 use crate::ui::terminal::style::StyleMod;
+use crate::ui::terminal::widget::{data, Widget};
 use crate::ui::terminal::Key;
 
 pub struct Selections {
@@ -85,6 +86,18 @@ impl Selections {
             o.adjust_style(focused, Some(i) == self.hover);
         }
     }
+    pub fn get_selected(&self) -> Vec<usize> {
+        if self.hover_equals_select {
+            self.hover.iter().map(|x| x.clone()).collect()
+        } else {
+            self.options
+                .iter()
+                .enumerate()
+                .filter(|(_, x)| x.selected)
+                .map(|(i, _)| i)
+                .collect()
+        }
+    }
 
     pub fn set_select(&mut self, j: usize, to_selected: bool) -> bool {
         let mut already_set = false;
@@ -105,12 +118,15 @@ impl Selections {
     }
     pub fn set_hover(&mut self, h: Option<usize>) -> bool {
         let mut made_change = false;
+        if self.hover == h {
+            return false;
+        }
         if self.hover_equals_select {
             if let Some(i) = self.hover {
-                made_change = made_change || self.set_select(i, false);
+                made_change = self.set_select(i, false) || made_change;
             }
             if let Some(j) = h {
-                made_change = made_change || self.set_select(j, true);
+                made_change = self.set_select(j, true) || made_change;
             }
         }
         made_change = made_change || self.hover != h;
@@ -131,7 +147,7 @@ impl Selections {
         let mut made_change = false;
         if Some(k) == self.select_key && !self.hover_equals_select {
             if let Some(i) = self.hover {
-                made_change |= self.set_select(i, !self.options[i].selected);
+                made_change = self.set_select(i, !self.options[i].selected) || made_change;
             }
             parsed = true;
         }
@@ -170,7 +186,7 @@ impl Selections {
                             };
                         }
                     }
-                    made_change |= self.set_hover(h);
+                    made_change = self.set_hover(h) || made_change;
                     parsed = true;
                     break;
                 }
@@ -190,5 +206,85 @@ impl Selections {
             self.adjust_styles(true); // assumes always focused when parsing keys
         }
         parsed
+    }
+}
+
+use std::cell::Cell;
+use std::rc::Rc;
+
+pub struct Choice(Rc<Cell<Vec<usize>>>);
+
+impl Choice {
+    pub fn new() -> Self {
+        Choice(Rc::new(Cell::new(Vec::new())))
+    }
+    pub fn set(&self, v: Vec<usize>) {
+        self.0.set(v);
+    }
+    pub fn retrieve(&self) -> Vec<usize> {
+        self.0.replace(Vec::new())
+    }
+    pub fn clone(&self) -> Self {
+        Choice(self.0.clone())
+    }
+}
+
+pub struct BasicWidget {
+    pub w_data: data::WidgetData,
+    pub selections: Selections,
+    pub choice: Choice,
+    pub confirm_key: Key,
+}
+
+impl BasicWidget {
+    pub fn new(
+        origin: (u16, u16),
+        size: (u16, u16),
+        sels: Vec<Selection>,
+        confirm: Key,
+        choice: Choice,
+    ) -> Self {
+        BasicWidget {
+            w_data: data::WidgetData::new(origin, size.0, size.1),
+            selections: Selections::new(sels),
+            choice: choice,
+            confirm_key: confirm,
+        }
+    }
+}
+impl Widget for BasicWidget {
+    fn start(&mut self) -> (&str, bool) {
+        self.w_data.set_focus(false);
+        self.selections.set_focus(false);
+        for text in &self.w_data.texts {
+            self.w_data.rect.apply_text(text);
+        }
+        self.selections.draw(&mut self.w_data.rect);
+        self.w_data.gen_drawstring();
+        (&self.w_data.updates, self.w_data.focusable)
+    }
+    fn gain_focus(&mut self) -> &str {
+        self.w_data.set_focus(true);
+        self.selections.set_focus(true);
+        self.selections.draw(&mut self.w_data.rect);
+        self.w_data.gen_drawstring();
+        &self.w_data.updates
+    }
+    fn lose_focus(&mut self) -> &str {
+        self.w_data.set_focus(false);
+        self.selections.set_focus(false);
+        self.selections.draw(&mut self.w_data.rect);
+        self.w_data.gen_drawstring();
+        &self.w_data.updates
+    }
+    fn parse(&mut self, key: Key) -> &str {
+        self.w_data.updates.clear();
+        if key == self.confirm_key {
+            self.choice.set(self.selections.get_selected());
+        } else if self.selections.parse_key(key) {
+            self.selections.draw(&mut self.w_data.rect);
+            self.w_data.gen_drawstring();
+        }
+        &self.w_data.updates
     }
 }

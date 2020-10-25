@@ -3,9 +3,11 @@ use termion::terminal_size;
 use crate::ui::terminal::{self, decorations, style, widget, Key};
 use decorations::{
     border::{self, Bar},
-    text,
+    selections::{self, Choice, Selection},
+    text::{self, Text},
     title::Flair,
 };
+use style::Color;
 use terminal::SyncTermUI;
 use widget::{data::WidgetData, textlog::TextLog, ui::WidgetUIBuilder};
 pub fn new_mock3() -> impl SyncTermUI {
@@ -17,11 +19,9 @@ pub fn new_mock3() -> impl SyncTermUI {
         //return format!("Term not properly sized; need (128, 56), have {:?}", (w, h));
     }
     let mut w1 = WidgetData::new((1, 1), 88, 30);
-    let mut w2 = WidgetData::new((89, 1), 40, 30);
     let mut w3 = WidgetData::new((41, 31), 88, 26);
     let mut w4 = WidgetData::new((1, 31), 40, 26);
     w1.add_title("Box One", 1, 4, true, None);
-    w2.add_title("Box Two", 21, 30, false, Some(Flair::HDiamond2));
     w3.add_title("Box Three", 23, 1, false, None);
     w3.add_title("Really Box Three", 30, 3, false, None);
     w3.add_title("For real", 10, 6, true, Some(Flair::VDiamond2));
@@ -34,9 +34,51 @@ pub fn new_mock3() -> impl SyncTermUI {
     w1.borders.bars.push(Bar::new(25));
     w1.borders.add_bar(25, false, 0, 0);
     w1.set_border_rgb(000, 000, 250, true);
-    w2.borders.add_bar(3, false, 0, 0);
-    w2.set_bordertype(border::BorderType::Double, false);
-    w2.set_border_rgb(250, 000, 000, true);
+
+    let choice = selections::Choice::new();
+    let mut s1 = Selection::new(Text::new("Choice 0", (3, 4)));
+
+    s1.base_style[0].fg = Some(Color::Rgb(100, 0, 0));
+    s1.base_style[1].fg = Some(Color::Rgb(250, 0, 0));
+
+    s1.hover_style[0].fg = Some(Color::Rgb(250, 250, 250));
+    s1.hover_style[0].bg = Some(Color::Rgb(0, 0, 100));
+    s1.hover_style[1].fg = Some(Color::Rgb(250, 250, 250));
+    s1.hover_style[1].bg = Some(Color::Rgb(0, 0, 250));
+
+    s1.selected_style[0].fg = Some(Color::Rgb(250, 250, 250));
+    s1.selected_style[0].bg = Some(Color::Rgb(100, 0, 0));
+    s1.selected_style[1].fg = Some(Color::Rgb(250, 250, 250));
+    s1.selected_style[1].bg = Some(Color::Rgb(250, 0, 0));
+
+    s1.h_and_s_style[0].fg = Some(Color::Rgb(250, 250, 250));
+    s1.h_and_s_style[0].bg = Some(Color::Rgb(100, 0, 100));
+
+    s1.h_and_s_style[1].fg = Some(Color::Rgb(250, 250, 250));
+    s1.h_and_s_style[1].bg = Some(Color::Rgb(250, 0, 250));
+    let s2 = Selection::new(Text::new("Choice 1", (3, 5))).copy_styles(&s1);
+    let s3 = Selection::new(Text::new("Choice 2", (3, 6))).copy_styles(&s1);
+
+    let mut w2 = selections::BasicWidget::new(
+        (89, 1),
+        (40, 30),
+        vec![s1, s2, s3],
+        Key::Char(' '),
+        choice.clone(),
+    );
+    w2.w_data
+        .add_title("Box Two", 21, 30, false, Some(Flair::HDiamond2));
+    w2.w_data.borders.add_bar(3, false, 0, 0);
+    w2.w_data.set_bordertype(border::BorderType::Double, false);
+    w2.w_data.set_border_rgb(250, 000, 000, true);
+    w2.selections.hover_keys = [Some(Key::Up), Some(Key::Down), None];
+    w2.selections.select_key = Some(Key::Char('\n'));
+
+    //w2.selections.hover = Some(0);
+    //w2.selections.options[0].selected = true;
+    //w2.selections.hover_equals_select = true;
+    w2.selections.can_multi_select = true;
+    //w2.selections.can_zero_select = false;
 
     w3.borders.add_bar(3, false, 0, 0);
     w3.borders.add_bar(10, true, 2, 0);
@@ -50,8 +92,8 @@ pub fn new_mock3() -> impl SyncTermUI {
     m.fg = Some(style::Color::Black);
     m.bg = Some(style::Color::White);
     //w1.new_text("Box One", (2, 2));
-    let mut i = w2.new_text("    Box Two    ", (2, 2));
-    w2.texts[i].style_mods = m.clone();
+    let mut i = w2.w_data.new_text("    Box Two    ", (2, 2));
+    w2.w_data.texts[i].style_mods = m.clone();
 
     let mut f3 = text::Fitter::default().middle();
     f3.val = '-';
@@ -86,7 +128,42 @@ pub fn new_mock3() -> impl SyncTermUI {
     builder.cycle_focus_keys[1] = Some(Key::Right);
 
     let ui = builder.build(0);
-    ui
+    MockUI {
+        ui,
+        choice,
+        count: [0, 0, 0],
+    }
+}
+
+pub struct MockUI {
+    ui: widget::ui::WidgetUI,
+    choice: Choice,
+    count: [usize; 3],
+}
+
+impl SyncTermUI for MockUI {
+    fn to_draw(&self) -> &str {
+        self.ui.to_draw()
+    }
+    fn parse(&mut self, key: Key) -> bool {
+        let q = self.ui.parse(key);
+        for j in 0..4 {
+            println!(
+                "{}                           ",
+                termion::cursor::Goto(4, 36 + j as u16)
+            );
+        }
+        for (j, i) in self.choice.retrieve().into_iter().enumerate() {
+            self.count[i] += 1;
+            println!(
+                "{}MADE CHOICE {}; TIME:{}",
+                termion::cursor::Goto(4, 36 + j as u16),
+                i,
+                self.count[i]
+            );
+        }
+        q
+    }
 }
 
 pub fn mock_text() -> &'static str {
