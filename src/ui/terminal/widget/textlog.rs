@@ -1,5 +1,5 @@
 use crate::ui::terminal::{
-    decorations::{text, title, Scrollbar},
+    parts::{text, title, Scrollbar},
     widget, Key,
 };
 

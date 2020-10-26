@@ -1,5 +1,6 @@
 pub mod cell;
-pub mod decorations;
+//pub mod decorations;
+pub mod parts;
 pub mod rect;
 pub mod style;
 pub mod widget;

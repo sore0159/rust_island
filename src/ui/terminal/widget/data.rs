@@ -1,7 +1,7 @@
 use super::Widget;
-use crate::ui::terminal::{decorations, rect, style, Key};
+use crate::ui::terminal::{parts, rect, style, Key};
 use border::BorderType;
-use decorations::{border, text, title};
+use parts::{border, text, title};
 use std::fmt::Write;
 use style::{Color, Style, StyleMod};
 
@@ -46,7 +46,8 @@ impl WidgetData {
     }
     pub fn apply_texts(&mut self) {
         for t in &self.texts {
-            self.rect.apply_text(t);
+            t.draw(&mut self.rect)
+            //self.rect.apply_text(t);
         }
     }
     pub fn gen_drawstring(&mut self) {
@@ -115,7 +116,8 @@ impl Widget for WidgetData {
     fn start(&mut self) -> (&str, bool) {
         self.set_focus(false);
         for text in &self.texts {
-            self.rect.apply_text(text);
+            //self.rect.apply_text(text);
+            text.draw(&mut self.rect)
         }
         self.gen_drawstring();
         (&self.updates, self.focusable)

@@ -1,13 +1,13 @@
 use termion::terminal_size;
 
-use crate::ui::terminal::{self, decorations, style, widget, Key};
-use decorations::{
+use crate::ui::terminal::{self, parts, style, widget, Key};
+use parts::{
     border::{self, Bar},
-    selections::{self, Choice, Selection},
+    selections::{self, Choice, Chooser, Selection},
     text::{self, Text},
     title::Flair,
 };
-use style::Color;
+
 use terminal::SyncTermUI;
 use widget::{data::WidgetData, textlog::TextLog, ui::WidgetUIBuilder};
 pub fn new_mock3() -> impl SyncTermUI {
@@ -35,50 +35,37 @@ pub fn new_mock3() -> impl SyncTermUI {
     w1.borders.add_bar(25, false, 0, 0);
     w1.set_border_rgb(000, 000, 250, true);
 
-    let choice = selections::Choice::new();
     let mut s1 = Selection::new(Text::new("Choice 0", (3, 4)));
+    s1.base_no_f((100, 0, 0), (0, 0, 0));
+    s1.base_f((250, 0, 0), (0, 0, 0));
+    s1.hover_no_f((250, 250, 250), (0, 0, 100));
+    s1.hover_f((250, 250, 250), (0, 0, 250));
+    s1.selected_no_f((250, 250, 250), (100, 0, 0));
+    s1.selected_f((250, 250, 250), (250, 0, 0));
+    s1.h_and_s_no_f((250, 250, 250), (100, 0, 100));
+    s1.h_and_s_f((250, 250, 250), (250, 0, 250));
 
-    s1.base_style[0].fg = Some(Color::Rgb(100, 0, 0));
-    s1.base_style[1].fg = Some(Color::Rgb(250, 0, 0));
-
-    s1.hover_style[0].fg = Some(Color::Rgb(250, 250, 250));
-    s1.hover_style[0].bg = Some(Color::Rgb(0, 0, 100));
-    s1.hover_style[1].fg = Some(Color::Rgb(250, 250, 250));
-    s1.hover_style[1].bg = Some(Color::Rgb(0, 0, 250));
-
-    s1.selected_style[0].fg = Some(Color::Rgb(250, 250, 250));
-    s1.selected_style[0].bg = Some(Color::Rgb(100, 0, 0));
-    s1.selected_style[1].fg = Some(Color::Rgb(250, 250, 250));
-    s1.selected_style[1].bg = Some(Color::Rgb(250, 0, 0));
-
-    s1.h_and_s_style[0].fg = Some(Color::Rgb(250, 250, 250));
-    s1.h_and_s_style[0].bg = Some(Color::Rgb(100, 0, 100));
-
-    s1.h_and_s_style[1].fg = Some(Color::Rgb(250, 250, 250));
-    s1.h_and_s_style[1].bg = Some(Color::Rgb(250, 0, 250));
     let s2 = Selection::new(Text::new("Choice 1", (3, 5))).copy_styles(&s1);
     let s3 = Selection::new(Text::new("Choice 2", (3, 6))).copy_styles(&s1);
+    let mut conf = selections::Config::default();
+    //conf.options[0].selected = true;
+    //conf.hover_eq_select = true;
+    //conf.select_eq_submit = true;
+    //conf.can_multi_select = true;
+    conf.can_zero_select = false;
+    let chooser = Chooser::new(vec![s1, s2, s3], conf)
+        .prev_key(Key::Up)
+        .next_key(Key::Down)
+        //.start_selected(vec![1, 2])
+        .start_hover(2);
 
-    let mut w2 = selections::BasicWidget::new(
-        (89, 1),
-        (40, 30),
-        vec![s1, s2, s3],
-        Key::Char(' '),
-        choice.clone(),
-    );
+    let mut w2 = selections::BasicWidget::new((89, 1), (40, 30), chooser);
     w2.w_data
         .add_title("Box Two", 21, 30, false, Some(Flair::HDiamond2));
     w2.w_data.borders.add_bar(3, false, 0, 0);
     w2.w_data.set_bordertype(border::BorderType::Double, false);
     w2.w_data.set_border_rgb(250, 000, 000, true);
-    w2.selections.hover_keys = [Some(Key::Up), Some(Key::Down), None];
-    w2.selections.select_key = Some(Key::Char('\n'));
-
-    //w2.selections.hover = Some(0);
-    //w2.selections.options[0].selected = true;
-    //w2.selections.hover_equals_select = true;
-    w2.selections.can_multi_select = true;
-    //w2.selections.can_zero_select = false;
+    let choice = w2.clone_choice();
 
     w3.borders.add_bar(3, false, 0, 0);
     w3.borders.add_bar(10, true, 2, 0);

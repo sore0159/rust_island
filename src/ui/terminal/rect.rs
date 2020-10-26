@@ -3,7 +3,6 @@ use termion::cursor;
 
 use crate::ui::terminal::{
     cell::Cell,
-    decorations::text::Text,
     style::{Style, StyleMod},
 };
 
@@ -78,6 +77,7 @@ impl Rect {
     pub fn reset_style(&mut self, start: (u16, u16), len: u16) {
         self.mod_style(start, len, &self.default_style.to_mod());
     }
+    /*
     pub fn apply_text(&mut self, text: &Text) {
         let st = self.default_style.clone();
         for (i, ch) in text.val.chars().enumerate() {
@@ -89,6 +89,7 @@ impl Rect {
             text.style_mods.apply(&mut cell.style);
         }
     }
+    */
     pub fn clean(&mut self) {
         for line in self.cells.iter_mut() {
             for cell in line {
