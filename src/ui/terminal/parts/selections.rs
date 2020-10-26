@@ -15,10 +15,10 @@ impl Choice {
     pub fn new() -> Self {
         Choice(Rc::new(Cell::new(Vec::new())))
     }
-    pub fn set(&self, v: Vec<usize>) {
+    pub fn push(&self, v: Vec<usize>) {
         self.0.set(v);
     }
-    pub fn retrieve(&self) -> Vec<usize> {
+    pub fn pop(&self) -> Vec<usize> {
         self.0.replace(Vec::new())
     }
     pub fn clone(&self) -> Self {

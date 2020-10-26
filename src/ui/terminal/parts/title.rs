@@ -41,8 +41,20 @@ impl Title {
     pub fn draw(&self, r: &mut Rect, border_style: &StyleMod) {
         let m = StyleMod {
             deco: None,
-            fg: self.text.style_mods.fg.clone().or(border_style.bg.clone()),
-            bg: self.text.style_mods.bg.clone().or(border_style.fg.clone()),
+            fg: self
+                .text
+                .style_mods
+                .fg
+                .clone()
+                .or(border_style.bg.clone())
+                .or(Some(r.default_style.bg.clone())),
+            bg: self
+                .text
+                .style_mods
+                .bg
+                .clone()
+                .or(border_style.fg.clone())
+                .or(Some(r.default_style.fg.clone())),
         };
         let mut ln = self.text.len() as usize;
         let spacer = if self.flair == Flair::None {

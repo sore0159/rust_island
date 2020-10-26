@@ -14,7 +14,7 @@ pub fn new_mock3() -> impl SyncTermUI {
     let (w, h) = terminal_size().unwrap();
     // assumes 128, 54; maybe check?
     println!("Term Size: {}w,{}h", w, h);
-    if w < 128 || h < 56 {
+    if w < 128 || h < 45 {
         panic!("Term not properly sized; need (128, 56), have {:?}", (w, h));
         //return format!("Term not properly sized; need (128, 56), have {:?}", (w, h));
     }
@@ -33,11 +33,11 @@ pub fn new_mock3() -> impl SyncTermUI {
 
     w1.borders.bars.push(Bar::new(25));
     w1.borders.add_bar(25, false, 0, 0);
-    w1.set_border_rgb(000, 000, 250, true);
+    w1.set_border_rgb((000, 000, 250), (0, 0, 0), true);
 
     let mut s1 = Selection::new(Text::new("Choice 0", (3, 4)));
-    s1.base_no_f((100, 0, 0), (0, 0, 0));
-    s1.base_f((250, 0, 0), (0, 0, 0));
+    s1.base_no_f((100, 0, 0), (30, 0, 0));
+    s1.base_f((250, 0, 0), (30, 0, 0));
     s1.hover_no_f((250, 250, 250), (0, 0, 100));
     s1.hover_f((250, 250, 250), (0, 0, 250));
     s1.selected_no_f((250, 250, 250), (100, 0, 0));
@@ -50,7 +50,7 @@ pub fn new_mock3() -> impl SyncTermUI {
     let mut conf = selections::Config::default();
     //conf.options[0].selected = true;
     //conf.hover_eq_select = true;
-    //conf.select_eq_submit = true;
+    conf.select_eq_submit = true;
     //conf.can_multi_select = true;
     conf.can_zero_select = false;
     let chooser = Chooser::new(vec![s1, s2, s3], conf)
@@ -64,16 +64,22 @@ pub fn new_mock3() -> impl SyncTermUI {
         .add_title("Box Two", 21, 30, false, Some(Flair::HDiamond2));
     w2.w_data.borders.add_bar(3, false, 0, 0);
     w2.w_data.set_bordertype(border::BorderType::Double, false);
-    w2.w_data.set_border_rgb(250, 000, 000, true);
+    w2.w_data.set_border_rgb((250, 000, 000), (30, 0, 0), true);
+    w2.w_data.set_border_rgb((255, 255, 255), (30, 0, 0), false);
+    w2.w_data.rect.default_style.bg = style::Color::Rgb(30, 0, 0);
+    w2.w_data.rect.clean();
     let choice = w2.clone_choice();
 
     w3.borders.add_bar(3, false, 0, 0);
     w3.borders.add_bar(10, true, 2, 0);
     w4.borders.add_bar(5, false, 0, 0);
     w3.set_bordertype(border::BorderType::Rounded, false);
-    w3.set_border_rgb(000, 250, 000, true);
+    w3.set_border_rgb((000, 250, 000), (0, 30, 0), true);
+    w3.set_border_rgb((255, 255, 255), (0, 30, 0), false);
+    w3.rect.default_style.bg = style::Color::Rgb(0, 30, 0);
+    w3.rect.clean();
     w4.set_bordertype(border::BorderType::Rounded, false);
-    w4.set_border_rgb(200, 100, 200, false);
+    w4.set_border_rgb((200, 100, 200), (0, 0, 0), false);
 
     let mut m = style::StyleMod::new();
     m.fg = Some(style::Color::Black);
@@ -136,11 +142,12 @@ impl SyncTermUI for MockUI {
         let q = self.ui.parse(key);
         for j in 0..4 {
             println!(
-                "{}                           ",
-                termion::cursor::Goto(4, 36 + j as u16)
+                "{}{}                           ",
+                termion::cursor::Goto(4, 36 + j as u16),
+                termion::color::Bg(termion::color::Black),
             );
         }
-        for (j, i) in self.choice.retrieve().into_iter().enumerate() {
+        for (j, i) in self.choice.pop().into_iter().enumerate() {
             self.count[i] += 1;
             println!(
                 "{}MADE CHOICE {}; TIME:{}",

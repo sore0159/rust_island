@@ -76,7 +76,7 @@ impl Chooser {
         if self.conf.hover_eq_select {
             self.set_select(i, true);
         }
-        self.choice.retrieve();
+        self.choice.pop();
         self
     }
 
@@ -98,7 +98,7 @@ impl Chooser {
         }
     }
     pub fn submit(&mut self) {
-        self.choice.set(self.get_selected());
+        self.choice.push(self.get_selected());
     }
 
     pub fn set_select(&mut self, j: usize, to_selected: bool) -> bool {

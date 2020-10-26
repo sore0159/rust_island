@@ -138,3 +138,9 @@ impl Default for StyleMod {
         }
     }
 }
+
+impl From<(u8, u8, u8)> for Color {
+    fn from(t: (u8, u8, u8)) -> Self {
+        Color::Rgb(t.0, t.1, t.2)
+    }
+}

@@ -7,7 +7,7 @@ use crate::ui::terminal::{
 pub struct Scrollbar {
     pub start: (u16, u16),
     pub len: u16,
-    pub vert: bool, // UNINPLEMENTED
+    pub vert: bool,
     pub style: Style,
     pub view_size: usize,
     pub total_size: usize,
@@ -49,8 +49,20 @@ impl Scrollbar {
             cell.val = match (h1, h2) {
                 (false, false) => ' ', //'\u{2591}',
                 (true, true) => '\u{2588}',
-                (true, false) => '\u{2580}',
-                (false, true) => '\u{2584}',
+                (true, false) => {
+                    if self.vert {
+                        '\u{2580}'
+                    } else {
+                        '\u{258c}'
+                    }
+                }
+                (false, true) => {
+                    if self.vert {
+                        '\u{2584}'
+                    } else {
+                        '\u{2590}'
+                    }
+                }
             };
             cell.style.set_to(&self.style);
         }

@@ -3,7 +3,7 @@ use crate::ui::terminal::{parts, rect, style, Key};
 use border::BorderType;
 use parts::{border, text, title};
 use std::fmt::Write;
-use style::{Color, Style, StyleMod};
+use style::{Style, StyleMod};
 
 pub struct WidgetData {
     pub rect: rect::Rect,
@@ -65,14 +65,15 @@ impl WidgetData {
         self.apply_border();
     }
 
-    pub fn set_border_rgb(&mut self, r: u8, g: u8, b: u8, focus: bool) {
-        if focus {
+    pub fn set_border_rgb(&mut self, fg: (u8, u8, u8), bg: (u8, u8, u8), focus: bool) {
+        let mut sty = &mut if focus {
             &mut self.b_styles[1]
         } else {
             &mut self.b_styles[0]
         }
-        .0
-        .fg = Some(Color::Rgb(r, g, b));
+        .0;
+        sty.fg = Some(fg.into());
+        sty.bg = Some(bg.into());
     }
     pub fn set_bordertype(&mut self, chartype: border::BorderType, focus: bool) {
         if focus {
