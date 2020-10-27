@@ -5,6 +5,7 @@ extern crate termion;
 mod tests;
 
 pub mod data;
+pub mod state;
 pub mod ui;
 
 fn main() {

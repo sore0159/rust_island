@@ -3,3 +3,5 @@ pub mod id_types;
 pub mod locations;
 pub mod mockup;
 pub mod names_list;
+
+pub use big_types::Game;
