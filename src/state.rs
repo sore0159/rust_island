@@ -1,6 +1,6 @@
 pub mod stack;
 
-// C is any UI output, D is game data
+// C is where you tell the UI what to output, D is game data
 // E is event type provided by UI
 pub trait State<C, D, E> {
     fn on_start(&mut self, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
