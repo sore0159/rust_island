@@ -1,5 +1,6 @@
 use super::{State, Trans};
 use std::iter::Iterator;
+use std::time::{Duration, Instant};
 
 pub struct StateStack<C, D, E, I>
 where
@@ -10,23 +11,64 @@ where
     pub data: D,
     pub event_stream: I,
 
-    pub tic_len: std::time::Duration,
+    pub tic_len: Duration,
 }
 
 impl<C, D, E, I> StateStack<C, D, E, I>
 where
     I: Iterator<Item = E>,
 {
+    pub fn new(first_state: impl State<C, D, E> + 'static, canvas: C, data: D, stream: I) -> Self {
+        StateStack {
+            stack: vec![Box::new(first_state)],
+            canvas: canvas,
+            data: data,
+            event_stream: stream,
+            tic_len: Duration::from_secs(1).div_f64(60.0),
+        }
+    }
     pub fn run(&mut self) {
-        //
+        let mut next_tic = Instant::now() + self.tic_len;
+        'OUTER: loop {
+            let now = Instant::now();
+            if self.stack.is_empty() {
+                break 'OUTER;
+            }
+            if let Some(_) = next_tic.checked_duration_since(now) {
+                let ln = self.stack.len();
+                for s in self.stack.iter_mut().take(ln - 1) {
+                    s.on_shadow_tic(&mut self.data, &mut self.canvas);
+                }
+                let t = self.stack[ln - 1].on_tic(&mut self.data, &mut self.canvas);
+                if self.handle_trans(t) {
+                    break 'OUTER;
+                }
+                next_tic += self.tic_len;
+            }
+            let ln = self.stack.len();
+            for s in self.stack.iter_mut().take(ln - 1) {
+                s.on_shadow_cycle(&mut self.data, &mut self.canvas);
+            }
+            let t = self.stack[ln - 1].on_cycle(&mut self.data, &mut self.canvas);
+            if self.handle_trans(t) {
+                break 'OUTER;
+            }
+            while let Some(e) = self.event_stream.next() {
+                let ln = self.stack.len();
+                let t = self.stack[ln - 1].handle_event(e, &mut self.data, &mut self.canvas);
+                if self.handle_trans(t) {
+                    break 'OUTER;
+                }
+            }
+        }
     }
 
-    pub fn handle_trans(&mut self, mut t: Trans<C, D, E>) {
+    pub fn handle_trans(&mut self, mut t: Trans<C, D, E>) -> bool {
         loop {
             let mut next_t = Trans::None;
             match t {
                 Trans::None => {
-                    return;
+                    return self.stack.is_empty();
                 }
                 Trans::Pop => {
                     let ln = self.stack.len();
@@ -74,11 +116,13 @@ where
                 }
                 Trans::Sequence(v) => {
                     for t in v {
-                        self.handle_trans(t);
+                        if self.handle_trans(t) {
+                            return true;
+                        }
                     }
                 }
                 Trans::Quit => {
-                    panic!("Attempted quit transititon in handling function");
+                    return true;
                 }
             }
             t = next_t;
