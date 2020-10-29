@@ -2,16 +2,16 @@ use crate::data::id_types::{LID, PID};
 use crate::data::locations::{Exit, Location};
 use rand::Rng;
 
-pub struct Game {
+pub struct Data {
     pub env: Env,
     pub pc: PC,
     pub persons: Vec<Person>,
     pub locations: Vec<Location>,
 }
 
-impl Game {
+impl Data {
     pub fn new() -> Self {
-        Game {
+        Data {
             env: Env::new(),
             pc: PC::new(),
             persons: Vec::with_capacity(200),
@@ -38,7 +38,7 @@ impl Game {
     }
 }
 
-impl Game {
+impl Data {
     pub fn move_out(&mut self, p: PID, l: LID) {
         l.get_mut(&mut self.locations).drop_p(p);
         p.get_mut(&mut self.persons).loc = None;

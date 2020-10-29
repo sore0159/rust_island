@@ -1,36 +1,14 @@
 pub mod stack;
+pub mod traits;
 
-// C is where you tell the UI what to output, D is game data
-// E is event type provided by UI
-pub trait State<C, D, E> {
-    fn on_start(&mut self, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
-        Trans::None
-    }
-    fn on_end(&mut self, _data: &mut D, _canvas: &mut C) {}
-    fn on_pause(&mut self, _data: &mut D, _canvas: &mut C) {}
-    fn on_resume(&mut self, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
-        Trans::None
-    }
-    fn handle_event(&mut self, _e: E, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
-        Trans::None
-    }
-    fn on_tic(&mut self, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
-        Trans::None
-    }
-    fn on_shadow_tic(&mut self, _data: &mut D, _canvas: &mut C) {}
-    fn on_cycle(&mut self, _data: &mut D, _canvas: &mut C) -> Trans<C, D, E> {
-        Trans::None
-    }
-    fn on_shadow_cycle(&mut self, _data: &mut D, _canvas: &mut C) {}
-}
+pub use traits::State;
 
-pub enum Trans<C, D, E> {
-    None,
-    Pop,
-    Push(Box<dyn State<C, D, E>>),
-    Switch(Box<dyn State<C, D, E>>),
-    PushMulti(Vec<Box<dyn State<C, D, E>>>),
-    PopAll,
-    Sequence(Vec<Trans<C, D, E>>),
-    Quit,
-}
+use crate::{data, ui};
+pub use data::Data;
+pub use ui::Canvas;
+pub use ui::Event;
+pub use ui::EventStream;
+
+pub type Trans = traits::Trans<Canvas, Data, Event>;
+
+pub type StateStack = stack::StateStack<Canvas, Data, Event, EventStream>;

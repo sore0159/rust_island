@@ -4,4 +4,4 @@ pub mod locations;
 pub mod mockup;
 pub mod names_list;
 
-pub use big_types::Game;
+pub use big_types::Data;

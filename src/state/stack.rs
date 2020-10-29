@@ -1,4 +1,4 @@
-use super::{State, Trans};
+use super::traits::{State, Trans};
 use std::iter::Iterator;
 use std::time::{Duration, Instant};
 

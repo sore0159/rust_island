@@ -1,8 +1,8 @@
-use crate::data::big_types::{Game, Person};
+use crate::data::big_types::{Data, Person};
 use crate::data::locations::Location;
 
-pub fn gen_mockup() -> Game {
-    let mut g = Game::new();
+pub fn gen_mockup() -> Data {
+    let mut g = Data::new();
     let l1 = g.add_location(Location::new("Place One", 1));
     let l2 = g.add_location(Location::new("Place Two", 1));
     g.add_exit(l1, l2, "The High Road", 2);
