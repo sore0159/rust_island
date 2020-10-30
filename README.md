@@ -2,8 +2,7 @@
         * Text-based (with possible scenery images) sims-like sandbox game.  More "let it run and watch" than "build stuff".  Like an ant-farm?
 
 *Current Task:*
-        * X Create a "State" stack (a la the Amethyst game engine) and figure out where that abstraction fits in the overall application design.
-        * 0 Adjust the current "UI" abstraction to work on top of the current "State" abstraction"
+        * Create a two-state mockup system where you hit a button to go to 'main menu' which lets you select quit or resume.
 
 *Future Tasks:*
         * Add a 3d window running parallel to the terminal

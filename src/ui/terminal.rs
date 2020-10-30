@@ -7,10 +7,11 @@ pub mod widget;
 pub use termion::event::Key;
 
 use std::error::Error;
-use std::io::{stdout, Write};
+use std::io::{stdout, Read, Write};
 use std::iter::Iterator;
 
-use termion::input::{Keys, TermRead};
+//use termion::input::{Keys, TermRead};
+//use termion::input::TermRead;
 use termion::raw::{IntoRawMode, RawTerminal};
 use termion::screen::AlternateScreen;
 use termion::{clear, cursor::HideCursor, AsyncReader};
@@ -36,8 +37,8 @@ pub fn new_alt_stdout() -> Result<AltStdout, Box<dyn Error>> {
     Ok(stdout)
 }
 
-pub struct Stdin(Keys<AsyncReader>);
-//pub struct Stdin(mion::Bytes<AsyncReader>);
+//pub struct Stdin(Keys<AsyncReader>);
+pub struct Stdin(std::io::Bytes<AsyncReader>);
 
 impl Stdin {
     pub fn new() -> Self {
@@ -51,14 +52,24 @@ impl Iterator for Stdin {
     fn next(&mut self) -> Option<crate::ui::Event> {
         let b = self.0.next();
         match b {
-            Some(Err(e)) => panic!("stdin iter error {:?}", e),
+            Some(Err(er)) => panic!("stdin iter error: {:?}", er),
             Some(Ok(k)) => {
                 let e = termion::event::parse_event(k, &mut self.0);
                 match e {
-                    //Some(termion::event::Event::Key(x)) => Some(termion::event::Key(x)),
-                    _ => None,
+                    Ok(termion::event::Event::Key(x)) => Some(x),
+                    //Err(er) => panic!("stdin iter inner error: {:?}", er),
+                    _ => {
+                        //if let Some(Ok(x)) = b {
+                        //if x == 27 {
+                        //return Some(Key::Esc);
+                        //}
+                        //}
+                        //println!("OTHER EVENT: {:?}", k);
+                        None
+                    } //_ => None,
                 }
             }
+            _ => None,
         }
     }
 }

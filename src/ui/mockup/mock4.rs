@@ -116,6 +116,7 @@ pub fn new_mock4() -> state::StateStack {
         Some(Key::Char('2')),
         Some(Key::Char('3')),
     ];
+    builder.quit_key = Some(Key::Char('`'));
     //builder.cycle_focus_keys[2] = None;
     builder.cycle_focus_keys[2] = Some(Key::Char('\t'));
     builder.cycle_focus_keys[0] = Some(Key::Left);

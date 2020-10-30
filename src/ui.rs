@@ -4,14 +4,14 @@ pub mod terminal;
 use std::error::Error;
 
 pub struct Canvas {
-    pub stdout: terminal::Stdout,
-    //pub stdout: terminal::AltStdout,
+    //pub stdout: terminal::Stdout,
+    pub stdout: terminal::AltStdout,
 }
 
 impl Canvas {
     pub fn new() -> Result<Self, Box<dyn Error>> {
-        let stdout = terminal::new_stdout()?;
-        //let stdout = terminal::new_alt_stdout()?;
+        //let stdout = terminal::new_stdout()?;
+        let stdout = terminal::new_alt_stdout()?;
         Ok(Canvas { stdout: stdout })
     }
 }
