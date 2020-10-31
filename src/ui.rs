@@ -1,30 +1,31 @@
+pub mod c_term;
 pub mod mockup;
-pub mod terminal;
+//pub mod terminal;
 
 use std::error::Error;
 
 pub struct Canvas {
-    //pub stdout: terminal::Stdout,
-    pub stdout: terminal::AltStdout,
+    pub stdout: c_term::Stdout,
+    //pub stdout: terminal::AltStdout,
 }
 
 impl Canvas {
     pub fn new() -> Result<Self, Box<dyn Error>> {
-        //let stdout = terminal::new_stdout()?;
-        let stdout = terminal::new_alt_stdout()?;
+        let stdout = c_term::new_stdout()?;
+        //let stdout = terminal::new_alt_stdout()?;
         Ok(Canvas { stdout: stdout })
     }
 }
 
-pub type Event = termion::event::Key;
+pub type Event = c_term::Key;
 
 pub struct EventStream {
-    pub stdin: terminal::Stdin,
+    pub stdin: c_term::Stdin,
 }
 
 impl EventStream {
     pub fn new() -> Result<EventStream, Box<dyn Error>> {
-        let stdin = terminal::Stdin::new();
+        let stdin = c_term::Stdin::new();
         Ok(EventStream { stdin: stdin })
     }
 }

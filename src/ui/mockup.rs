@@ -1,4 +1,4 @@
-pub mod mock4;
+//pub mod mock4;
 
 use std::io::Write;
 
@@ -13,7 +13,8 @@ impl state::State<state::Canvas, state::Data, state::Event> for NullState {
         _data: &mut state::Data,
         canvas: &mut state::Canvas,
     ) -> Trans {
-        if k == state::Event::Char('q') {
+        if k == state::Event::State1 {
+            //if k == state::Event::Char('q') {
             Trans::Quit
         } else {
             write!(canvas.stdout, "BLAH").unwrap();
