@@ -16,10 +16,10 @@ impl WidgetStateBuilder {
     pub fn new() -> Self {
         WidgetStateBuilder {
             //quit_key: Some(Key::Esc),
-            quit_key: Some(Key::State1),
+            quit_key: None, //Some(Key::State1),
             quick_focus_keys: Vec::new(),
             //cycle_focus_keys: [None, None, Some(Key::Char(' '))],
-            cycle_focus_keys: [None, None, Some(Key::State1)],
+            cycle_focus_keys: [None, None, None], //Some(Key::State1)],
             widgets: Vec::new(),
             focusable: Vec::new(),
             update_str: String::new(),

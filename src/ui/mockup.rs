@@ -13,8 +13,7 @@ impl state::State<state::Canvas, state::Data, state::Event> for NullState {
         _data: &mut state::Data,
         canvas: &mut state::Canvas,
     ) -> Trans {
-        if k == state::Event::State1 {
-            //if k == state::Event::Char('q') {
+        if k.is_char('q') {
             Trans::Quit
         } else {
             write!(canvas.stdout, "BLAH").unwrap();

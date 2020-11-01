@@ -51,10 +51,10 @@ pub enum Color {
 }
 
 /*
-type WriteErr = std::result::Result<(), std::fmt::Error>;
+use anyhow::Result;
 
 impl Decoration {
-    pub fn start(&self, mut w: impl Write) -> WriteErr {
+    pub fn start(&self, mut w: impl Write) -> Result<()> {
         match self {
             Decoration::None => Ok(()),
             Decoration::Bold => write!(w, "{}", termion::style::Bold),
@@ -62,7 +62,7 @@ impl Decoration {
         }
     }
 
-    pub fn stop(&self, mut w: impl Write) -> WriteErr {
+    pub fn stop(&self, mut w: impl Write) -> Result<()> {
         match self {
             Decoration::None => Ok(()),
             Decoration::Bold => write!(w, "{}", termion::style::NoBold),
@@ -72,7 +72,7 @@ impl Decoration {
 }
 
 impl Color {
-    pub fn start_fg(&self, mut w: impl Write) -> WriteErr {
+    pub fn start_fg(&self, mut w: impl Write) -> Result<()> {
         match self {
             Color::Black => write!(w, "{}", color::Fg(color::Black)),
             Color::White => write!(w, "{}", color::Fg(color::White)),
@@ -82,7 +82,7 @@ impl Color {
             Color::Rgb(r, g, b) => write!(w, "{}", color::Fg(color::Rgb(*r, *g, *b))),
         }
     }
-    pub fn start_bg(&self, mut w: impl Write) -> WriteErr {
+    pub fn start_bg(&self, mut w: impl Write) -> Result<()> {
         match self {
             Color::Black => write!(w, "{}", color::Bg(color::Black)),
             Color::White => write!(w, "{}", color::Bg(color::White)),

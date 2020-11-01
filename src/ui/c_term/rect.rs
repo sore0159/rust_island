@@ -74,19 +74,6 @@ impl Rect {
     pub fn reset_style(&mut self, start: (u16, u16), len: u16) {
         self.mod_style(start, len, &self.default_style.to_mod());
     }
-    /*
-    pub fn apply_text(&mut self, text: &Text) {
-        let st = self.default_style.clone();
-        for (i, ch) in text.val.chars().enumerate() {
-            let mut cell = self
-                .get_mut((text.start.0 + i as u16, text.start.1))
-                .unwrap();
-            cell.val = ch;
-            cell.style.set_to(&st);
-            text.style_mods.apply(&mut cell.style);
-        }
-    }
-    */
     pub fn clean(&mut self) {
         for line in self.cells.iter_mut() {
             for cell in line {
