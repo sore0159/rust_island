@@ -66,7 +66,7 @@ impl Bar {
                 j if j == end - 1 => char_for(self.end_type.clone(), chartype),
                 _ => mid_char.clone(),
             };
-            r.add_at(coord, ch, m);
+            r.imprint_at(coord, ch, m);
         }
     }
 }
@@ -102,9 +102,11 @@ impl Borders {
             bar.draw(rect, &self.mods, self.chartype.clone());
         }
         for coord in &self.crosses {
-            let cell = rect.get_mut(*coord).unwrap();
-            cell.add_style_mods(&self.mods);
-            cell.val = char_for(BorderChar::XSplit, self.chartype.clone());
+            rect.imprint_at(
+                *coord,
+                char_for(BorderChar::XSplit, self.chartype.clone()),
+                &self.mods,
+            );
         }
     }
     pub fn add_bar(&mut self, at: u16, vert: bool, pad_start: u16, pad_end: u16) -> usize {

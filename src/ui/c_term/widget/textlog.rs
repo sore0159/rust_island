@@ -303,9 +303,10 @@ impl TextLog {
             1 | 2 => self.scrollbar.start.0 = self.size.0 as u16,
             _ => self.scrollbar.start.0 = self.size.0 as u16 - 1,
         }
-        if let Some(cl) = &self.w_data.borders.mods.foreground_color {
-            self.scrollbar.style.foreground_color = Some(cl.clone());
-        }
+        //if let Some(cl) = &self.w_data.borders.mods.foreground_color {
+        //self.scrollbar.style.foreground_color = Some(cl.clone());
+        //}
+        self.scrollbar.style.foreground_color = self.w_data.borders.mods.foreground_color;
         self.scrollbar.draw(&mut self.w_data.rect);
     }
 }

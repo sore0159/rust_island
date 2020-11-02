@@ -29,7 +29,7 @@ pub fn new_mock5() -> state::StateStack {
     w1.borders.add_bar(24, false, 0, 0);
     //w1.set_border_rgb((000, 255, 255), (0, 0, 0), true);
     w1.set_border_rgb((0, 0, 255), (0, 0, 0), true);
-    w1.set_border_rgb((000, 000, 150), (0, 0, 0), false);
+    //w1.set_border_rgb((000, 000, 150), (0, 0, 0), false);
 
     let mut s1 = Selection::new(Text::new("Choice 0", (2, 3)));
     s1.base_no_f((100, 0, 0), (30, 0, 0));

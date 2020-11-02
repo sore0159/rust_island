@@ -62,20 +62,28 @@ impl Title {
                 (self.text.start.0 + i as u16 - 1, self.text.start.1)
             };
             let chars = self.flair.chars();
+            let cell = r.get_mut(coord).unwrap();
+            let mut m2 = m.clone();
+            if m.background_color.is_none() {
+                m2.background_color = Some(cell.base_fg);
+            }
+            if m.foreground_color.is_none() {
+                m2.foreground_color = Some(cell.base_bg);
+            }
             if spacer.is_some() {
                 match i {
                     0 => {
-                        r.add_at(coord, chars.0, border_style);
+                        r.imprint_at(coord, chars.0, border_style);
                     }
                     j if j == ln => {
-                        r.add_at(coord, chars.1, border_style);
+                        r.imprint_at(coord, chars.1, border_style);
                     }
                     _ => {
-                        r.add_at(coord, c, &m);
+                        r.imprint_at(coord, c, &m2);
                     }
                 }
             } else {
-                r.add_at(coord, c, &m);
+                r.imprint_at(coord, c, &m2);
             }
         }
     }

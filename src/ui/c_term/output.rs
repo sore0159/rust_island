@@ -167,6 +167,7 @@ impl Rect {
             self.add_at((start.0 + i as u16, start.1), c, sty);
         }
     }
+    /*
     pub fn external_get_mut(&mut self, ext_coord: (u16, u16)) -> Option<&mut Cell> {
         let x = match ext_coord.0.checked_sub(self.origin.0) {
             None => return None,
@@ -180,6 +181,7 @@ impl Rect {
             .get_mut(y as usize)
             .and_then(|row| row.cells.get_mut(x as usize))
     }
+    */
 
     pub fn get_mut(&mut self, coord: (u16, u16)) -> Option<&mut Cell> {
         self.lines
