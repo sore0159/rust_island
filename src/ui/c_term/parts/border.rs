@@ -1,7 +1,4 @@
-use super::super::{
-    rect::Rect,
-    style::{Color, StyleMod},
-};
+use super::super::output::{Rect, Style};
 
 #[derive(Clone, Debug)]
 pub struct Bar {
@@ -39,7 +36,7 @@ impl Bar {
         self.end_type = end;
         self
     }
-    pub fn draw(&self, r: &mut Rect, m: &StyleMod, chartype: BorderType) {
+    pub fn draw(&self, r: &mut Rect, m: &Style, chartype: BorderType) {
         let start = self.padding.0;
         let (end, mid_char, at) = if self.vert {
             (
@@ -63,17 +60,15 @@ impl Bar {
             )
         };
         for i in start..end {
-            let cell = if self.vert {
-                &mut r.cells[i as usize][at as usize - 1]
-            } else {
-                &mut r.cells[at as usize - 1][i as usize]
+            //println!("{};{};{}", i, end, self.vert);
+
+            let coord = if self.vert { (at, i + 1) } else { (i + 1, at) };
+            let ch = match i {
+                j if j == start => char_for(self.start_type.clone(), chartype),
+                j if j == end - 1 => char_for(self.end_type.clone(), chartype),
+                _ => mid_char.clone(),
             };
-            m.apply(&mut cell.style);
-            match i {
-                j if j == start => cell.val = char_for(self.start_type.clone(), chartype),
-                j if j == end - 1 => cell.val = char_for(self.end_type.clone(), chartype),
-                _ => cell.val = mid_char.clone(),
-            }
+            r.add_at(coord, ch, m);
         }
     }
 }
@@ -82,7 +77,7 @@ impl Bar {
 pub struct Borders {
     pub bars: Vec<Bar>,
     pub crosses: Vec<(u16, u16)>,
-    pub mods: StyleMod,
+    pub mods: Style,
     pub chartype: BorderType,
 }
 
@@ -96,11 +91,7 @@ impl Default for Borders {
         v.push(Bar::new(1).vert(true).from_end().with_ends(TR, BR));
         Borders {
             bars: v,
-            mods: StyleMod {
-                fg: Some(Color::White),
-                bg: Some(Color::Black),
-                deco: None,
-            },
+            mods: Default::default(),
             crosses: Vec::new(),
             chartype: BorderType::Basic,
         }
@@ -114,7 +105,7 @@ impl Borders {
         }
         for coord in &self.crosses {
             let cell = rect.get_mut(*coord).unwrap();
-            self.mods.apply(&mut cell.style);
+            cell.add_style_mods(&self.mods);
             cell.val = char_for(BorderChar::XSplit, self.chartype.clone());
         }
     }

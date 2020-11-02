@@ -1,10 +1,10 @@
-use super::super::{rect::Rect, style};
+use super::super::output::{Rect, Style};
 
 #[derive(Debug)]
 pub struct Text {
     pub val: String,
     pub start: (u16, u16),
-    pub style_mods: style::StyleMod,
+    pub style_mods: Style,
 }
 
 impl Text {
@@ -14,7 +14,7 @@ impl Text {
     pub fn new(s: impl Into<String>, start: (u16, u16)) -> Self {
         Text {
             val: s.into(),
-            style_mods: style::StyleMod::new(),
+            style_mods: Style::default(),
             start: start,
         }
     }
@@ -31,12 +31,12 @@ impl Text {
         self.val = f.fit(&self.val.trim_matches(f.val), size as usize);
     }
     pub fn draw(&self, r: &mut Rect) {
-        let st = r.default_style.clone();
         for (i, ch) in self.val.chars().enumerate() {
-            let mut cell = r.get_mut((self.start.0 + i as u16, self.start.1)).unwrap();
-            cell.val = ch;
-            cell.style.set_to(&st);
-            self.style_mods.apply(&mut cell.style);
+            r.add_at(
+                (self.start.0 + i as u16, self.start.1),
+                ch,
+                &self.style_mods,
+            );
         }
     }
 }

@@ -9,7 +9,7 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new() -> Result<Self> {
-        let stdout = c_term::Stdout::new();
+        let stdout = c_term::Stdout::new()?;
         Ok(Canvas { stdout: stdout })
     }
 }

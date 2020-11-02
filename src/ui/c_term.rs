@@ -1,8 +1,5 @@
-pub mod cell;
 pub mod output;
 pub mod parts;
-pub mod rect;
-pub mod style;
 pub mod widget;
 
 //use anyhow::Result;
@@ -33,15 +30,49 @@ impl Key {
     }
 }
 
+use crossterm::cursor::{Hide, Show};
+use crossterm::execute;
+use crossterm::terminal::{
+    self, Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, SetSize,
+};
+
 pub struct Stdout {
     pub stdout: std::io::Stdout,
     pub alt: bool,
 }
 
 impl Stdout {
-    pub fn new() -> Self {
-        let stdout = std::io::stdout();
-        Stdout { stdout, alt: false }
+    pub fn new() -> anyhow::Result<Self> {
+        let mut stdout = std::io::stdout();
+        execute!(stdout, EnterAlternateScreen, Hide, Clear(ClearType::All))?;
+        terminal::enable_raw_mode()?;
+        let s = Stdout { stdout, alt: true };
+        Ok(s)
+    }
+    pub fn quit_cleanup(&mut self) -> anyhow::Result<()> {
+        execute!(self.stdout, LeaveAlternateScreen, Show)?;
+        terminal::disable_raw_mode()?;
+        Ok(())
+    }
+    pub fn set_size(&mut self, size: (u16, u16)) -> anyhow::Result<()> {
+        execute!(self.stdout, SetSize(size.0, size.1))?;
+        Ok(())
+    }
+    pub fn get_size(&self) -> anyhow::Result<(u16, u16)> {
+        Ok(terminal::size()?)
+    }
+    pub fn to_alt_screen(&mut self) -> anyhow::Result<()> {
+        execute!(self.stdout, EnterAlternateScreen)?;
+        self.alt = true;
+        Ok(())
+    }
+    pub fn to_main_screen(&mut self) -> anyhow::Result<()> {
+        execute!(self.stdout, LeaveAlternateScreen)?;
+        self.alt = false;
+        Ok(())
+    }
+    pub fn to_raw(&mut self) -> anyhow::Result<()> {
+        Ok(terminal::enable_raw_mode()?)
     }
 }
 
@@ -51,6 +82,12 @@ impl Write for Stdout {
     }
     fn flush(&mut self) -> std::io::Result<()> {
         self.stdout.flush()
+    }
+}
+
+impl Drop for Stdout {
+    fn drop(&mut self) {
+        self.quit_cleanup().expect("error in stdout cleanup oh no!");
     }
 }
 

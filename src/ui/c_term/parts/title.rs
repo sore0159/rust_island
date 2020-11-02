@@ -1,7 +1,4 @@
-use super::super::{
-    rect::Rect,
-    style::{Color, StyleMod},
-};
+use super::super::output::{new_rgb, Rect, Style};
 use super::text;
 
 pub struct Title {
@@ -36,25 +33,13 @@ impl Title {
         self
     }
     pub fn force_fg(&mut self, r: u8, g: u8, b: u8) {
-        self.text.style_mods.fg = Some(Color::Rgb(r, g, b));
+        self.text.style_mods.foreground_color = Some(new_rgb(r, g, b));
     }
-    pub fn draw(&self, r: &mut Rect, border_style: &StyleMod) {
-        let m = StyleMod {
-            deco: None,
-            fg: self
-                .text
-                .style_mods
-                .fg
-                .clone()
-                .or(border_style.bg.clone())
-                .or(Some(r.default_style.bg.clone())),
-            bg: self
-                .text
-                .style_mods
-                .bg
-                .clone()
-                .or(border_style.fg.clone())
-                .or(Some(r.default_style.fg.clone())),
+    pub fn draw(&self, r: &mut Rect, border_style: &Style) {
+        let m = Style {
+            foreground_color: border_style.background_color,
+            background_color: border_style.foreground_color,
+            attributes: border_style.attributes,
         };
         let mut ln = self.text.len() as usize;
         let spacer = if self.flair == Flair::None {
@@ -76,26 +61,21 @@ impl Title {
             } else {
                 (self.text.start.0 + i as u16 - 1, self.text.start.1)
             };
-            let mut cell = r.get_mut(coord).unwrap();
             let chars = self.flair.chars();
             if spacer.is_some() {
                 match i {
                     0 => {
-                        cell.val = chars.0;
-                        border_style.apply(&mut cell.style);
+                        r.add_at(coord, chars.0, border_style);
                     }
                     j if j == ln => {
-                        cell.val = chars.1;
-                        border_style.apply(&mut cell.style);
+                        r.add_at(coord, chars.1, border_style);
                     }
                     _ => {
-                        cell.val = c;
-                        m.apply(&mut cell.style);
+                        r.add_at(coord, c, &m);
                     }
                 }
             } else {
-                cell.val = c;
-                m.apply(&mut cell.style);
+                r.add_at(coord, c, &m);
             }
         }
     }

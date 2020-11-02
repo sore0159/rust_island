@@ -1,4 +1,4 @@
-use super::super::super::{rect::Rect, Key};
+use super::super::super::{output::Rect, Key, KeyCode};
 
 use super::{Choice, Selection};
 
@@ -28,12 +28,14 @@ impl Default for Config {
             select_eq_submit: false,
             can_multi_select: false,
             can_zero_select: true,
-            //hover_keys: [Some(Key::Up), Some(Key::Down), None],
-            //select_key: Some(Key::Char('\n')),
-            //submit_key: Some(Key::Char(' ')),
-            hover_keys: [None, None, None],
-            select_key: None,
-            submit_key: None,
+            hover_keys: [
+                Some(Key::from_code(KeyCode::Up)),
+                Some(Key::from_code(KeyCode::Down)),
+                None,
+            ],
+            select_key: Some(Key::from_code(KeyCode::Enter)),
+            //select_key: Some(Key::from_char('\n')),
+            submit_key: Some(Key::from_char(' ')),
         }
     }
 }

@@ -22,36 +22,34 @@ impl BasicWidget {
     }
 }
 impl Widget for BasicWidget {
-    fn start(&mut self) -> (&str, bool) {
+    fn start(&mut self) -> bool {
         self.w_data.set_focus(false);
         self.selections.set_focus(false);
         for text in &self.w_data.texts {
             text.draw(&mut self.w_data.rect);
         }
         self.selections.draw(&mut self.w_data.rect);
-        self.w_data.gen_drawstring();
-        (&self.w_data.updates, self.w_data.focusable)
+        self.w_data.focusable
     }
-    fn gain_focus(&mut self) -> &str {
+    fn gain_focus(&mut self) {
         self.w_data.set_focus(true);
         self.selections.set_focus(true);
         self.selections.draw(&mut self.w_data.rect);
-        self.w_data.gen_drawstring();
-        &self.w_data.updates
     }
-    fn lose_focus(&mut self) -> &str {
+    fn lose_focus(&mut self) {
         self.w_data.set_focus(false);
         self.selections.set_focus(false);
         self.selections.draw(&mut self.w_data.rect);
-        self.w_data.gen_drawstring();
-        &self.w_data.updates
     }
-    fn parse(&mut self, key: Key) -> &str {
-        self.w_data.updates.clear();
+    fn parse(&mut self, key: Key) -> bool {
         if self.selections.parse_key(key) {
             self.selections.draw(&mut self.w_data.rect);
-            self.w_data.gen_drawstring();
+            true
+        } else {
+            false
         }
-        &self.w_data.updates
+    }
+    fn queue_write(&mut self, s: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
+        self.w_data.queue_write(s)
     }
 }

@@ -1,4 +1,4 @@
-//pub mod mock4;
+pub mod mock5;
 
 use std::io::Write;
 
@@ -16,14 +16,14 @@ impl state::State<state::Canvas, state::Data, state::Event> for NullState {
         if k.is_char('q') {
             Trans::Quit
         } else {
-            write!(canvas.stdout, "BLAH").unwrap();
+            write!(canvas.stdout, "EVENT:{:?}", k).unwrap();
             canvas.stdout.flush().unwrap();
             Trans::None
         }
     }
 }
 
-pub fn gen_mockup() -> Result<state::StateStack, Box<dyn std::error::Error>> {
+pub fn gen_mockup() -> anyhow::Result<state::StateStack> {
     let d = crate::data::mockup::gen_mockup();
     Ok(state::stack::StateStack::new(
         NullState,

@@ -10,12 +10,13 @@ pub mod state;
 pub mod ui;
 
 use anyhow::Result;
-use crossterm::ExecutableCommand;
+//use crossterm::ExecutableCommand;
 
 fn main() -> Result<()> {
-    println!("HELLO");
-    //let mut stack = ui::mockup::mock4::new_mock4();
-    //stack.run();
+    //let mut stack = ui::mockup::mock5::new_mock5();
+    let mut stack = ui::mockup::gen_mockup()?;
+    stack.run();
+    /*
     let mut stdout = std::io::stdout();
     let (x, y) = crossterm::terminal::size()?;
     //stdout.execute(crossterm::terminal::SetSize(x - 1, y - 1))?;
@@ -41,6 +42,7 @@ fn main() -> Result<()> {
         queue!(stdout, PrintStyledContent(s))?;
     }
     stdout.flush()?;
+    */
 
     Ok(())
 }

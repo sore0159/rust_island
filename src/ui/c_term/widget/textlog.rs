@@ -1,9 +1,7 @@
-use super::super::{
-    parts::{text, title, Scrollbar},
-    widget, Key,
-};
-
-use widget::{data::WidgetData, Widget};
+use super::super::{output::Style, parts, Key, KeyCode};
+use super::{data::WidgetData, Widget};
+use parts::scrollbar::Scrollbar;
+use parts::{text, title};
 
 pub struct TextLog {
     pub w_data: WidgetData,
@@ -46,8 +44,8 @@ impl TextLog {
         use title::Flair;
         self.w_data.borders.bars.truncate(4);
         self.w_data.titles.truncate(self.keep_titles);
+        let m = Style::default();
         let mut y = 1 + self.size.1;
-        let m = self.w_data.rect.default_style.to_mod();
         if self.last.len() > self.size.1 {
             let t = "Showing Only Last Event";
             self.w_data.add_title(
@@ -67,14 +65,12 @@ impl TextLog {
                 if i == self.size.1 {
                     return;
                 }
-                self.w_data
-                    .rect
-                    .apply_str((2, (y - i) as u16), &line, Some(&m));
+                self.w_data.rect.str_add_at((2, y as u16), line, &m);
             }
             return;
         }
         for line in self.last.iter().rev() {
-            self.w_data.rect.apply_str((2, y as u16), &line, Some(&m));
+            self.w_data.rect.str_add_at((2, y as u16), line, &m);
             y -= 1;
             if y < 2 {
                 break;
@@ -136,7 +132,7 @@ impl TextLog {
         }
 
         for line in self.log.iter().rev().skip(self.scroll_val) {
-            self.w_data.rect.apply_str((2, y as u16), &line, Some(&m));
+            self.w_data.rect.str_add_at((2, y as u16), line, &m);
             y -= 1;
             if y < 2 {
                 return;
@@ -144,7 +140,7 @@ impl TextLog {
         }
         let line: String = std::iter::repeat(' ').take(self.size.0).collect();
         while y > 1 {
-            self.w_data.rect.apply_str((2, y as u16), &line, Some(&m));
+            self.w_data.rect.str_add_at((2, y as u16), &line, &m);
             y -= 1;
         }
     }
@@ -309,59 +305,51 @@ impl TextLog {
             return;
         }
 
-        if let Some(cl) = &self.w_data.borders.mods.fg {
-            self.scrollbar.style.fg = cl.clone();
+        if let Some(cl) = &self.w_data.borders.mods.foreground_color {
+            self.scrollbar.style.foreground_color = Some(cl.clone());
         }
         self.scrollbar.draw(&mut self.w_data.rect);
     }
 }
 
 impl Widget for TextLog {
-    fn start(&mut self) -> (&str, bool) {
+    fn start(&mut self) -> bool {
         self.reset_scroll_val();
         self.adjust_rect();
         self.w_data.start()
     }
-    fn gain_focus(&mut self) -> &str {
+    fn gain_focus(&mut self) {
         self.w_data.set_focus(true);
         self.draw_scrollbar();
-        self.w_data.gen_drawstring();
-        &self.w_data.updates
     }
-    fn lose_focus(&mut self) -> &str {
+    fn lose_focus(&mut self) {
         self.w_data.set_focus(false);
         self.draw_scrollbar();
-        self.w_data.gen_drawstring();
-        &self.w_data.updates
     }
-    fn parse(&mut self, key: Key) -> &str {
-        match key {
-            /*
-            Key::Down => {
+    fn parse(&mut self, key: Key) -> bool {
+        let parsed = false;
+        match key.code() {
+            KeyCode::Down => {
                 if self.change_scroll_val(-1) {
                     self.adjust_rect();
-                    self.w_data.gen_drawstring();
                 }
             }
-            Key::PageDown => {
+            KeyCode::PageDown => {
                 if self.change_scroll_val(-10) {
                     self.adjust_rect();
-                    self.w_data.gen_drawstring();
                 }
             }
-            Key::PageUp => {
+            KeyCode::PageUp => {
                 if self.change_scroll_val(10) {
                     self.adjust_rect();
-                    self.w_data.gen_drawstring();
                 }
             }
-            Key::Up => {
+            KeyCode::Up => {
                 if self.change_scroll_val(1) {
                     self.adjust_rect();
-                    self.w_data.gen_drawstring();
                 }
             }
-            Key::Char('\n') => {
+            KeyCode::Char('\n') => {
                 if !self.last.is_empty() {
                     self.add_event("");
                 } else {
@@ -369,19 +357,19 @@ impl Widget for TextLog {
                 }
                 self.reset_scroll_val();
                 self.adjust_rect();
-                self.w_data.gen_drawstring();
             }
-            Key::Char('a') => {
+            KeyCode::Char('a') => {
                 if self.last.is_empty() {
                     self.add_event("Also, Eric loves Julie");
                     self.reset_scroll_val();
                     self.adjust_rect();
-                    self.w_data.gen_drawstring();
                 }
             }
-            */
             _ => {} //_ => println!("GOT:{:?}", key),
         }
-        &self.w_data.updates
+        parsed
+    }
+    fn queue_write(&mut self, w: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
+        self.w_data.queue_write(w)
     }
 }

@@ -1,27 +1,25 @@
-use super::super::{parts, rect, style, Key};
+use super::super::{output::Rect, output::Style, parts, Key};
 use super::Widget;
 use border::BorderType;
 use parts::{border, text, title};
-use std::fmt::Write;
-use style::{Style, StyleMod};
 
 pub struct WidgetData {
-    pub rect: rect::Rect,
+    pub rect: Rect,
     pub borders: border::Borders,
     pub titles: Vec<title::Title>,
     pub texts: Vec<text::Text>,
     pub updates: String,
     pub selected: Vec<((u16, u16), u16)>,
-    pub b_styles: [(StyleMod, BorderType); 2],
+    pub b_styles: [(Style, BorderType); 2],
     pub i_styles: WidgetStyle,
     pub focusable: bool,
 }
 
 impl WidgetData {
     pub fn new(origin: (u16, u16), w: u16, h: u16) -> Self {
-        WidgetData::new_with_rect(rect::Rect::new(origin, w, h))
+        WidgetData::new_with_rect(Rect::new(origin, (w, h)))
     }
-    pub fn new_with_rect(r: rect::Rect) -> Self {
+    pub fn new_with_rect(r: Rect) -> Self {
         WidgetData {
             rect: r,
             borders: border::Borders::default(),
@@ -50,10 +48,6 @@ impl WidgetData {
             //self.rect.apply_text(t);
         }
     }
-    pub fn gen_drawstring(&mut self) {
-        self.updates.clear();
-        write!(self.updates, "{}", self.rect).unwrap();
-    }
     pub fn set_focus(&mut self, to_focused: bool) {
         let sty = if to_focused {
             &self.b_styles[1]
@@ -72,8 +66,8 @@ impl WidgetData {
             &mut self.b_styles[0]
         }
         .0;
-        sty.fg = Some(fg.into());
-        sty.bg = Some(bg.into());
+        sty.foreground_color = Some(fg.into());
+        sty.background_color = Some(bg.into());
     }
     pub fn set_bordertype(&mut self, chartype: border::BorderType, focus: bool) {
         if focus {
@@ -114,27 +108,24 @@ impl WidgetData {
 }
 
 impl Widget for WidgetData {
-    fn start(&mut self) -> (&str, bool) {
+    fn start(&mut self) -> bool {
         self.set_focus(false);
         for text in &self.texts {
-            //self.rect.apply_text(text);
             text.draw(&mut self.rect)
         }
-        self.gen_drawstring();
-        (&self.updates, self.focusable)
+        self.focusable
     }
-    fn gain_focus(&mut self) -> &str {
+    fn gain_focus(&mut self) {
         self.set_focus(true);
-        self.gen_drawstring();
-        &self.updates
     }
-    fn lose_focus(&mut self) -> &str {
+    fn lose_focus(&mut self) {
         self.set_focus(false);
-        self.gen_drawstring();
-        &self.updates
     }
-    fn parse(&mut self, _key: Key) -> &str {
-        &self.updates
+    fn parse(&mut self, _key: Key) -> bool {
+        false
+    }
+    fn queue_write(&mut self, w: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
+        self.rect.queue_write(w)
     }
 }
 

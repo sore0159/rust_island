@@ -2,6 +2,12 @@ use crossterm::style::{ContentStyle, StyledContent};
 
 pub type Style = ContentStyle;
 
+pub use crossterm::style::Color;
+
+pub fn new_rgb(r: u8, g: u8, b: u8) -> Color {
+    Color::Rgb { r, g, b }
+}
+
 pub fn style_eq(s1: &Style, s2: &Style) -> bool {
     if s1.foreground_color != s2.foreground_color {
         return false;
@@ -11,30 +17,58 @@ pub fn style_eq(s1: &Style, s2: &Style) -> bool {
     }
     s1.attributes == s2.attributes
 }
+pub fn add_style(source: &Style, target: &mut Style) {
+    if source.foreground_color.is_some() {
+        target.foreground_color = source.foreground_color;
+    }
+    if source.background_color.is_some() {
+        target.background_color = source.background_color;
+    }
+    target.attributes.extend(source.attributes);
+}
 
 #[derive(Debug, Clone)]
 pub struct Cell {
     pub val: char,
-    pub style: Style,
+    style_mods: Style,
+    pub base_fg: Color,
+    pub base_bg: Color,
 }
 
 impl Cell {
     pub fn set_to(&mut self, other: &Self) {
         self.val = other.val;
-        self.style = other.style.clone();
+        self.style_mods = other.style_mods.clone();
     }
-    pub fn same_style(&self, other: &Self) -> bool {
-        style_eq(&self.style, &other.style)
+    pub fn to_base_style(&mut self) {
+        self.style_mods = Default::default();
     }
-    pub fn reset_style(&mut self) {
-        self.style = Default::default();
-    }
-    pub fn clear(&mut self) {
+    pub fn clear_char(&mut self) {
         self.val = ' ';
     }
     pub fn to_default(&mut self) {
-        self.clear();
-        self.reset_style();
+        self.clear_char();
+        self.to_base_style();
+    }
+    pub fn set_style_mods(&mut self, s: &Style) {
+        self.style_mods = s.clone();
+    }
+    pub fn add_style_mods(&mut self, s: &Style) {
+        add_style(s, &mut self.style_mods);
+    }
+    pub fn set_base(&mut self, fg: Color, bg: Color) {
+        self.base_fg = fg;
+        self.base_bg = bg;
+    }
+    pub fn get_output_style(&self) -> Style {
+        let mut s = self.style_mods.clone();
+        if s.foreground_color.is_none() {
+            s.foreground_color = Some(self.base_fg);
+        }
+        if s.background_color.is_none() {
+            s.background_color = Some(self.base_bg);
+        }
+        s
     }
 }
 
@@ -42,7 +76,9 @@ impl Default for Cell {
     fn default() -> Self {
         Cell {
             val: ' ',
-            style: Default::default(),
+            style_mods: Default::default(),
+            base_fg: Color::White,
+            base_bg: Color::Black,
         }
     }
 }
@@ -58,15 +94,16 @@ impl Line {
     pub fn generate_content(&self) -> Vec<StyledContent<String>> {
         let mut stylized = Vec::new();
         let mut s = String::new();
-        let mut last_cell: Option<&Cell> = None;
+        let mut last_style: Option<Style> = None;
         for cell in &self.cells {
-            if let Some(last) = last_cell {
-                if !style_eq(&last.style, &cell.style) {
-                    stylized.push(StyledContent::new(last.style, s));
+            let o_style = cell.get_output_style();
+            if let Some(last) = last_style {
+                if !style_eq(&last, &o_style) {
+                    stylized.push(StyledContent::new(last, s));
                     s = String::new();
                 }
             } else {
-                last_cell = Some(cell);
+                last_style = Some(o_style);
             }
             s.push(cell.val);
         }
@@ -108,6 +145,26 @@ impl Rect {
             lines,
         }
     }
+    pub fn imprint_at(&mut self, at: (u16, u16), c: char, s: &Style) {
+        let cell = &mut self.lines[at.1 as usize - 1].cells[at.0 as usize - 1];
+        cell.val = c;
+        cell.set_style_mods(s);
+    }
+    pub fn add_at(&mut self, at: (u16, u16), c: char, s: &Style) {
+        let cell = &mut self.lines[at.1 as usize - 1].cells[at.0 as usize - 1];
+        cell.val = c;
+        cell.add_style_mods(s);
+    }
+    pub fn str_imprint_at(&mut self, start: (u16, u16), st: &str, sty: &Style) {
+        for (i, c) in st.chars().enumerate() {
+            self.imprint_at((start.0 + i as u16, start.1), c, sty);
+        }
+    }
+    pub fn str_add_at(&mut self, start: (u16, u16), st: &str, sty: &Style) {
+        for (i, c) in st.chars().enumerate() {
+            self.add_at((start.0 + i as u16, start.1), c, sty);
+        }
+    }
     // external 1,1 based coords but since origin is too it's fine
     pub fn external_get_mut(&mut self, ext_coord: (u16, u16)) -> Option<&mut Cell> {
         let x = match ext_coord.0.checked_sub(self.origin.0) {
@@ -137,4 +194,33 @@ impl Rect {
         }
         Ok(())
     }
+    pub fn all_cells(&mut self, f: impl Fn(&mut Cell)) {
+        for line in self.lines.iter_mut() {
+            for cell in &mut line.cells {
+                f(cell);
+            }
+        }
+    }
 }
+
+/*
+pub struct CellIter<'a> {
+    i: usize,
+    r: &'a mut Rect,
+}
+
+// This should be able to be a normal iterator, you can do this with vectors, but I can't figure it
+// out for now so I'm just making my own jank busted iterator
+impl<'a> CellIter<'a> {
+    pub fn next(&'a mut self) -> Option<&'a mut Cell> {
+        let line = self.i / (self.r.size.0 as usize);
+        if line > self.r.size.1 as usize {
+            return None;
+        }
+        let col = self.i % (self.r.size.0 as usize);
+        self.i += 1;
+        let c = Some(&mut self.r.lines[line].cells[col]);
+        c
+    }
+}
+*/

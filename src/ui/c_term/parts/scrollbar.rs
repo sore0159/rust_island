@@ -1,7 +1,4 @@
-use super::super::{
-    rect::Rect,
-    style::{Color, Style},
-};
+use super::super::output::{new_rgb, Rect, Style};
 
 #[derive(Debug)]
 pub struct Scrollbar {
@@ -17,7 +14,8 @@ pub struct Scrollbar {
 impl Scrollbar {
     pub fn new() -> Self {
         let mut s: Style = Default::default();
-        s.bg = Color::Rgb(40, 40, 40);
+        s.background_color = Some(new_rgb(40, 40, 40));
+        s.foreground_color = Some(new_rgb(255, 255, 255));
         Scrollbar {
             start: (0, 0),
             len: 0,
@@ -41,12 +39,12 @@ impl Scrollbar {
             h1 = ((view_end as f64) >= c1) && ((self.skipped_lines as f64) <= c1 + chunk_size);
             h2 = ((view_end as f64) >= c2) && ((self.skipped_lines as f64) <= c2 + chunk_size);
 
-            let mut cell = if self.vert {
-                r.get_mut((self.start.0, self.start.1 + i as u16)).unwrap()
+            let coord = if self.vert {
+                (self.start.0, self.start.1 + i as u16)
             } else {
-                r.get_mut((self.start.0 + i as u16, self.start.1)).unwrap()
+                (self.start.0 + i as u16, self.start.1)
             };
-            cell.val = match (h1, h2) {
+            let c = match (h1, h2) {
                 (false, false) => ' ', //'\u{2591}',
                 (true, true) => '\u{2588}',
                 (true, false) => {
@@ -64,7 +62,7 @@ impl Scrollbar {
                     }
                 }
             };
-            cell.style.set_to(&self.style);
+            r.imprint_at(coord, c, &self.style);
         }
     }
 }
