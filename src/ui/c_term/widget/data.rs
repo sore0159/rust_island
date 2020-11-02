@@ -11,7 +11,7 @@ pub struct WidgetData {
     pub updates: String,
     pub selected: Vec<((u16, u16), u16)>,
     pub b_styles: [(Style, BorderType); 2],
-    pub i_styles: WidgetStyle,
+    //pub i_styles: WidgetStyle,
     pub focusable: bool,
 }
 
@@ -31,7 +31,7 @@ impl WidgetData {
                 (Default::default(), BorderType::Basic),
                 (Default::default(), BorderType::Thick),
             ],
-            i_styles: Default::default(),
+            //i_styles: Default::default(),
             focusable: true,
         }
     }

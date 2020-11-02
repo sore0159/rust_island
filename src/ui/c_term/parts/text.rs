@@ -9,7 +9,7 @@ pub struct Text {
 
 impl Text {
     pub fn from_str(s: impl Into<String>) -> Self {
-        Self::new(s, (1, 1))
+        Self::new(s, (0, 0))
     }
     pub fn new(s: impl Into<String>, start: (u16, u16)) -> Self {
         Text {

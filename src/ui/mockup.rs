@@ -16,7 +16,15 @@ impl state::State<state::Canvas, state::Data, state::Event> for NullState {
         if k.is_char('q') {
             Trans::Quit
         } else {
+            crossterm::queue!(
+                canvas.stdout,
+                crossterm::terminal::Clear(crossterm::terminal::ClearType::All),
+                crossterm::cursor::MoveTo(4, 4)
+            )
+            .unwrap();
             write!(canvas.stdout, "EVENT:{:?}", k).unwrap();
+            crossterm::queue!(canvas.stdout, crossterm::cursor::MoveTo(4, 5)).unwrap();
+            write!(canvas.stdout, "Press q to quit").unwrap();
             canvas.stdout.flush().unwrap();
             Trans::None
         }

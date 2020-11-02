@@ -21,7 +21,7 @@ impl TextLog {
         let h = wd.rect.size.1 - 2;
         let keep = wd.titles.len();
         let mut sb = Scrollbar::new();
-        sb.start = (w, 2);
+        sb.start = (w, 1);
         TextLog {
             w_data: wd,
             size: (w as usize, h as usize),
@@ -45,13 +45,13 @@ impl TextLog {
         self.w_data.borders.bars.truncate(4);
         self.w_data.titles.truncate(self.keep_titles);
         let m = Style::default();
-        let mut y = 1 + self.size.1;
+        let mut y = self.size.1;
         if self.last.len() > self.size.1 {
             let t = "Showing Only Last Event";
             self.w_data.add_title(
                 t,
                 (self.size.0 - t.chars().count()) as u16 / 2,
-                1,
+                0,
                 false,
                 Some(Flair::WedgeDown),
             );
@@ -65,20 +65,22 @@ impl TextLog {
                 if i == self.size.1 {
                     return;
                 }
-                self.w_data.rect.str_add_at((2, y as u16), line, &m);
+                self.w_data
+                    .rect
+                    .str_imprint_at((1, (y - i) as u16), line, &m);
             }
             return;
         }
         for line in self.last.iter().rev() {
-            self.w_data.rect.str_add_at((2, y as u16), line, &m);
+            self.w_data.rect.str_imprint_at((1, y as u16), line, &m);
             y -= 1;
-            if y < 2 {
+            if y < 1 {
                 break;
             }
         }
-        if y <= 2 {
-            if y == 2 {
-                self.w_data.borders.add_bar(2, false, 0, 0);
+        if y <= 1 {
+            if y == 1 {
+                self.w_data.borders.add_bar(1, false, 0, 0);
             }
             let t = "Showing Only Last Event";
             self.w_data.add_title(
@@ -106,7 +108,7 @@ impl TextLog {
             self.w_data.add_title(
                 t2,
                 (self.size.0 - t2.chars().count() - 3) as u16,
-                1,
+                0,
                 false,
                 Some(Flair::WedgeDown),
             );
@@ -118,7 +120,7 @@ impl TextLog {
                 t2,
                 //(self.size.0 - t2.chars().count() - 3) as u16,
                 10,
-                1,
+                0,
                 false,
                 Some(Flair::WedgeDown),
             );
@@ -132,15 +134,15 @@ impl TextLog {
         }
 
         for line in self.log.iter().rev().skip(self.scroll_val) {
-            self.w_data.rect.str_add_at((2, y as u16), line, &m);
+            self.w_data.rect.str_imprint_at((1, y as u16), line, &m);
             y -= 1;
-            if y < 2 {
+            if y < 1 {
                 return;
             }
         }
         let line: String = std::iter::repeat(' ').take(self.size.0).collect();
-        while y > 1 {
-            self.w_data.rect.str_add_at((2, y as u16), &line, &m);
+        while y > 0 {
+            self.w_data.rect.str_imprint_at((1, y as u16), &line, &m);
             y -= 1;
         }
     }
@@ -298,13 +300,9 @@ impl TextLog {
         }
         match self.padding.1 {
             0 => return,
-            1 | 2 => self.scrollbar.start.0 = self.size.0 as u16 + 1,
-            _ => self.scrollbar.start.0 = self.size.0 as u16,
+            1 | 2 => self.scrollbar.start.0 = self.size.0 as u16,
+            _ => self.scrollbar.start.0 = self.size.0 as u16 - 1,
         }
-        if self.padding.1 == 0 {
-            return;
-        }
-
         if let Some(cl) = &self.w_data.borders.mods.foreground_color {
             self.scrollbar.style.foreground_color = Some(cl.clone());
         }
@@ -327,29 +325,33 @@ impl Widget for TextLog {
         self.draw_scrollbar();
     }
     fn parse(&mut self, key: Key) -> bool {
-        let parsed = false;
+        let mut parsed = false;
         match key.code() {
             KeyCode::Down => {
                 if self.change_scroll_val(-1) {
                     self.adjust_rect();
+                    parsed = true;
                 }
             }
             KeyCode::PageDown => {
                 if self.change_scroll_val(-10) {
                     self.adjust_rect();
+                    parsed = true;
                 }
             }
             KeyCode::PageUp => {
                 if self.change_scroll_val(10) {
                     self.adjust_rect();
+                    parsed = true;
                 }
             }
             KeyCode::Up => {
                 if self.change_scroll_val(1) {
                     self.adjust_rect();
+                    parsed = true;
                 }
             }
-            KeyCode::Char('\n') => {
+            KeyCode::Enter => {
                 if !self.last.is_empty() {
                     self.add_event("");
                 } else {
@@ -357,12 +359,14 @@ impl Widget for TextLog {
                 }
                 self.reset_scroll_val();
                 self.adjust_rect();
+                parsed = true;
             }
             KeyCode::Char('a') => {
                 if self.last.is_empty() {
                     self.add_event("Also, Eric loves Julie");
                     self.reset_scroll_val();
                     self.adjust_rect();
+                    parsed = true;
                 }
             }
             _ => {} //_ => println!("GOT:{:?}", key),

@@ -45,7 +45,7 @@ impl Bar {
                 if self.at.1 {
                     self.at.0
                 } else {
-                    r.size.0 - self.at.0 + 1
+                    r.size.0 - self.at.0 - 1
                 },
             )
         } else {
@@ -55,14 +55,12 @@ impl Bar {
                 if self.at.1 {
                     self.at.0
                 } else {
-                    r.size.1 - self.at.0 + 1
+                    r.size.1 - self.at.0 - 1
                 },
             )
         };
         for i in start..end {
-            //println!("{};{};{}", i, end, self.vert);
-
-            let coord = if self.vert { (at, i + 1) } else { (i + 1, at) };
+            let coord = if self.vert { (at, i) } else { (i, at) };
             let ch = match i {
                 j if j == start => char_for(self.start_type.clone(), chartype),
                 j if j == end - 1 => char_for(self.end_type.clone(), chartype),
@@ -85,10 +83,10 @@ impl Default for Borders {
     fn default() -> Self {
         use BorderChar::*;
         let mut v = Vec::with_capacity(4);
-        v.push(Bar::new(1).with_ends(TL, TR));
-        v.push(Bar::new(1).from_end().with_ends(BL, BR));
-        v.push(Bar::new(1).vert(true).with_ends(TL, BL));
-        v.push(Bar::new(1).vert(true).from_end().with_ends(TR, BR));
+        v.push(Bar::new(0).with_ends(TL, TR));
+        v.push(Bar::new(0).from_end().with_ends(BL, BR));
+        v.push(Bar::new(0).vert(true).with_ends(TL, BL));
+        v.push(Bar::new(0).vert(true).from_end().with_ends(TR, BR));
         Borders {
             bars: v,
             mods: Default::default(),

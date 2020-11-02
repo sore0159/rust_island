@@ -1,4 +1,4 @@
-use super::super::Key;
+use super::super::{Key, KeyCode};
 use super::Widget;
 use std::io::Write;
 
@@ -15,11 +15,10 @@ pub struct WidgetStateBuilder {
 impl WidgetStateBuilder {
     pub fn new() -> Self {
         WidgetStateBuilder {
-            //quit_key: Some(Key::Esc),
-            quit_key: None, //Some(Key::State1),
+            quit_key: Some(Key::from_code(KeyCode::Esc)),
             quick_focus_keys: Vec::new(),
-            //cycle_focus_keys: [None, None, Some(Key::Char(' '))],
-            cycle_focus_keys: [None, None, None], //Some(Key::State1)],
+            cycle_focus_keys: [None, None, Some(Key::from_code(KeyCode::Tab))],
+            //cycle_focus_keys: [None, None, Some(Key::from_char('\t'))],
             widgets: Vec::new(),
             focusable: Vec::new(),
             cur_focus: 0,
@@ -33,6 +32,7 @@ impl WidgetStateBuilder {
     pub fn start_focus(&mut self, i: usize) {
         self.widgets[i].gain_focus();
         self.changed[i] = true;
+        self.cur_focus = i;
     }
     pub fn send_focus_key(&mut self, k: Key) {
         self.changed[self.cur_focus] =
@@ -59,12 +59,11 @@ impl WidgetStateBuilder {
         let list: Vec<usize> = self
             .changed
             .iter()
-            .filter(|x| **x)
             .enumerate()
+            .filter(|(_, x)| **x)
             .map(|(i, _)| i)
             .collect();
         for i in list {
-            //let mut widget: &mut Box<dyn Widget> = &mut self.widgets[i];
             self.widgets[i].queue_write(s)?;
             self.changed[i] = false;
         }

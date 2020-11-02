@@ -102,10 +102,12 @@ impl Line {
                     stylized.push(StyledContent::new(last, s));
                     s = String::new();
                 }
-            } else {
-                last_style = Some(o_style);
             }
+            last_style = Some(o_style);
             s.push(cell.val);
+        }
+        if let Some(last) = last_style {
+            stylized.push(StyledContent::new(last, s));
         }
         stylized
     }
@@ -146,12 +148,12 @@ impl Rect {
         }
     }
     pub fn imprint_at(&mut self, at: (u16, u16), c: char, s: &Style) {
-        let cell = &mut self.lines[at.1 as usize - 1].cells[at.0 as usize - 1];
+        let cell = &mut self.lines[at.1 as usize].cells[at.0 as usize];
         cell.val = c;
         cell.set_style_mods(s);
     }
     pub fn add_at(&mut self, at: (u16, u16), c: char, s: &Style) {
-        let cell = &mut self.lines[at.1 as usize - 1].cells[at.0 as usize - 1];
+        let cell = &mut self.lines[at.1 as usize].cells[at.0 as usize];
         cell.val = c;
         cell.add_style_mods(s);
     }
@@ -165,7 +167,6 @@ impl Rect {
             self.add_at((start.0 + i as u16, start.1), c, sty);
         }
     }
-    // external 1,1 based coords but since origin is too it's fine
     pub fn external_get_mut(&mut self, ext_coord: (u16, u16)) -> Option<&mut Cell> {
         let x = match ext_coord.0.checked_sub(self.origin.0) {
             None => return None,
@@ -180,11 +181,10 @@ impl Rect {
             .and_then(|row| row.cells.get_mut(x as usize))
     }
 
-    // internal, but still 1,1 based coords
     pub fn get_mut(&mut self, coord: (u16, u16)) -> Option<&mut Cell> {
         self.lines
-            .get_mut(coord.1 as usize - 1)
-            .and_then(|row| row.cells.get_mut(coord.0 as usize - 1))
+            .get_mut(coord.1 as usize)
+            .and_then(|row| row.cells.get_mut(coord.0 as usize))
     }
 
     pub fn queue_write(&self, mut w: impl Write) -> anyhow::Result<()> {
@@ -202,25 +202,3 @@ impl Rect {
         }
     }
 }
-
-/*
-pub struct CellIter<'a> {
-    i: usize,
-    r: &'a mut Rect,
-}
-
-// This should be able to be a normal iterator, you can do this with vectors, but I can't figure it
-// out for now so I'm just making my own jank busted iterator
-impl<'a> CellIter<'a> {
-    pub fn next(&'a mut self) -> Option<&'a mut Cell> {
-        let line = self.i / (self.r.size.0 as usize);
-        if line > self.r.size.1 as usize {
-            return None;
-        }
-        let col = self.i % (self.r.size.0 as usize);
-        self.i += 1;
-        let c = Some(&mut self.r.lines[line].cells[col]);
-        c
-    }
-}
-*/

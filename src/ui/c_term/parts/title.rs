@@ -10,13 +10,13 @@ pub struct Title {
 impl Title {
     pub fn new(s: impl Into<String>, x: u16, y: u16, vert: bool) -> Self {
         let flair = if !vert {
-            if y == 1 {
+            if y == 0 {
                 Flair::WedgeDown
             } else {
                 Flair::WedgeUp
             }
         } else {
-            if x == 1 {
+            if x == 0 {
                 Flair::WedgeRight
             } else {
                 Flair::WedgeLeft
