@@ -139,14 +139,21 @@ pub struct MockState {
 
 impl state::State<state::Canvas, state::Data, state::Event> for MockState {
     fn on_start(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
-        let (w, h) = canvas.stdout.get_size().unwrap();
-        // assumes 128, 54; maybe check?
-        if w < 128 || h < 45 {
-            canvas.stdout.to_main_screen().unwrap();
-            println!("Term not properly sized; need (128, 56), have {:?}", (w, h));
-            //return format!("Term not properly sized; need (128, 56), have {:?}", (w, h));
-        }
         self.ui.on_start(data, canvas)
+    }
+    fn on_tic(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
+        let (mut w, mut h) = canvas.stdout.get_size().unwrap();
+        if w < 128 || h < 56 {
+            if w < 128 {
+                w = 128
+            }
+            if h < 56 {
+                h = 56
+            }
+            canvas.stdout.set_size((w, h)).unwrap();
+            self.ui.write_flush_full(&mut canvas.stdout).unwrap();
+        }
+        Trans::None
     }
     fn on_cycle(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
         self.ui.on_cycle(data, canvas)

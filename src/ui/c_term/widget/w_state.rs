@@ -55,8 +55,21 @@ impl WidgetStateBuilder {
         }
         WidgetState(self)
     }
+}
+
+pub struct WidgetState(WidgetStateBuilder);
+
+impl WidgetState {
+    pub fn write_flush_full(&mut self, s: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
+        for w in &mut self.0.widgets {
+            w.queue_write(s)?;
+        }
+        s.flush()?;
+        Ok(())
+    }
     pub fn write_flush(&mut self, s: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
         let list: Vec<usize> = self
+            .0
             .changed
             .iter()
             .enumerate()
@@ -64,25 +77,23 @@ impl WidgetStateBuilder {
             .map(|(i, _)| i)
             .collect();
         for i in list {
-            self.widgets[i].queue_write(s)?;
-            self.changed[i] = false;
+            self.0.widgets[i].queue_write(s)?;
+            self.0.changed[i] = false;
         }
         s.flush()?;
         Ok(())
     }
 }
 
-pub struct WidgetState(WidgetStateBuilder);
-
 use crate::state::{self, Trans};
 
 impl state::State<state::Canvas, state::Data, state::Event> for WidgetState {
     fn on_start(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
-        self.0.write_flush(&mut canvas.stdout).unwrap();
+        self.write_flush(&mut canvas.stdout).unwrap();
         Trans::None
     }
     fn on_cycle(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
-        self.0.write_flush(&mut canvas.stdout).unwrap();
+        self.write_flush(&mut canvas.stdout).unwrap();
         Trans::None
     }
 
