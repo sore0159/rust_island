@@ -3,7 +3,7 @@ use crate::ui::c_term::{output, parts, widget, Key, KeyCode};
 use output::new_rgb;
 use parts::{
     border::{self, Bar},
-    selections::{self, Choice, Chooser, Selection},
+    selections::{self, Choice, ChoiceBool, Chooser, Selection},
     text::{self, Text},
     title::Flair,
 };
@@ -29,6 +29,7 @@ pub fn new_mock5() -> state::StateStack {
     w1.borders.add_bar(24, false, 0, 0);
     //w1.set_border_rgb((000, 255, 255), (0, 0, 0), true);
     w1.set_border_rgb((0, 0, 255), (0, 0, 0), true);
+    w1.set_border_rgb((150, 150, 255), (0, 0, 0), false);
     //w1.set_border_rgb((000, 000, 150), (0, 0, 0), false);
 
     let mut s1 = Selection::new(Text::new("Choice 0", (2, 3)));
@@ -121,6 +122,7 @@ pub fn new_mock5() -> state::StateStack {
     let s = MockState {
         ui,
         choice,
+        quit_confirmed: ChoiceBool::new(),
         count: [0, 0, 0],
     };
 
@@ -134,12 +136,20 @@ pub fn new_mock5() -> state::StateStack {
 pub struct MockState {
     ui: widget::w_state::WidgetState,
     choice: Choice,
+    quit_confirmed: ChoiceBool,
     count: [usize; 3],
 }
 
 impl state::State<state::Canvas, state::Data, state::Event> for MockState {
     fn on_start(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
         self.ui.on_start(data, canvas)
+    }
+    fn on_resume(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
+        if let Some(true) = self.quit_confirmed.pop() {
+            Trans::Quit
+        } else {
+            self.ui.on_resume(data, canvas)
+        }
     }
     fn on_tic(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
         let (mut w, mut h) = canvas.stdout.get_size().unwrap();
@@ -174,7 +184,15 @@ impl state::State<state::Canvas, state::Data, state::Event> for MockState {
             crossterm::queue!(canvas.stdout, crossterm::cursor::MoveTo(3, 35 + j as u16),).unwrap();
             println!("MADE CHOICE {}; TIME:{}", i, self.count[i]);
         }
-        q
+        match q {
+            Trans::Quit => Trans::Push(Box::new(ConfirmState::new(
+                "quit",
+                (20, 20),
+                (80, 7),
+                self.quit_confirmed.clone(),
+            ))),
+            _ => q,
+        }
     }
 }
 
@@ -183,4 +201,71 @@ pub fn mock_text() -> &'static str {
         Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
         Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
         Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+}
+
+pub struct ConfirmState {
+    ui: widget::w_state::WidgetState,
+    confirm_choice: Choice,
+    confirmed: ChoiceBool,
+}
+
+impl ConfirmState {
+    pub fn new(choice_desc: &str, origin: (u16, u16), size: (u16, u16), pipe: ChoiceBool) -> Self {
+        //
+        let mut conf = selections::Config::default();
+        conf.hover_eq_select = true;
+        conf.can_zero_select = false;
+        conf.select_key = None;
+        conf.submit_key = Some(Key::from_code(KeyCode::Enter));
+        let mut t1 = Text::new(format!("Do you really want to {}?", choice_desc), (2, 2));
+        t1.fit(&text::Fitter::default().middle(), size.0 - 2);
+        let mut s1 = Selection::new(Text::new(" Yes ", ((size.0 - 2) / 4 - 1, 4)));
+        s1.h_and_s_f((255, 255, 255), (255, 0, 0));
+        let s2 = Selection::new(Text::new(" No ", ((size.0 - 2) * 3 / 4 - 3, 4))).copy_styles(&s1);
+        let chooser = Chooser::new(vec![s1, s2], conf)
+            .prev_key(Key::from_code(KeyCode::Left))
+            .next_key(Key::from_code(KeyCode::Right))
+            .start_hover(0);
+        let mut w = selections::BasicWidget::new(origin, size, chooser);
+        w.w_data.texts.push(t1);
+        let choice = w.clone_choice();
+        let mut builder = WidgetStateBuilder::new();
+        //builder.quit_key = None;
+        builder.add_widget(w);
+        ConfirmState {
+            ui: builder.build(0),
+            confirm_choice: choice,
+            confirmed: pipe,
+        }
+    }
+}
+impl state::State<state::Canvas, state::Data, state::Event> for ConfirmState {
+    fn on_start(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
+        self.ui.on_start(data, canvas)
+    }
+    fn on_cycle(&mut self, data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
+        self.ui.on_cycle(data, canvas)
+    }
+    fn handle_event(
+        &mut self,
+        key: state::Event,
+        data: &mut state::Data,
+        canvas: &mut state::Canvas,
+    ) -> Trans {
+        if key.code() == KeyCode::Esc {
+            return Trans::Pop;
+        }
+        let q = self.ui.handle_event(key, data, canvas);
+        for i in self.confirm_choice.pop() {
+            if i == 0 {
+                println!("CONFIRMED CHOICE");
+                self.confirmed.push(Some(true));
+            } else {
+                println!("DID NOT CONFIRM CHOICE");
+                self.confirmed.push(Some(false));
+            }
+            return Trans::Pop;
+        }
+        q
+    }
 }

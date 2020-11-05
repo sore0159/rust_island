@@ -6,22 +6,26 @@ pub use chooser::{Chooser, Config};
 pub use sel::Selection;
 pub use widget::BasicWidget;
 
-use std::cell::Cell;
-use std::rc::Rc;
+pub type Choice = choice::Choice<Vec<usize>>;
+pub type ChoiceBool = choice::Choice<Option<bool>>;
 
-pub struct Choice(Rc<Cell<Vec<usize>>>);
+pub mod choice {
+    use std::cell::Cell;
+    use std::rc::Rc;
+    pub struct Choice<T: Default>(Rc<Cell<T>>);
 
-impl Choice {
-    pub fn new() -> Self {
-        Choice(Rc::new(Cell::new(Vec::new())))
-    }
-    pub fn push(&self, v: Vec<usize>) {
-        self.0.set(v);
-    }
-    pub fn pop(&self) -> Vec<usize> {
-        self.0.replace(Vec::new())
-    }
-    pub fn clone(&self) -> Self {
-        Choice(self.0.clone())
+    impl<T: Default> Choice<T> {
+        pub fn new() -> Self {
+            Choice(Rc::new(Cell::new(T::default())))
+        }
+        pub fn push(&self, v: T) {
+            self.0.set(v);
+        }
+        pub fn pop(&self) -> T {
+            self.0.replace(T::default())
+        }
+        pub fn clone(&self) -> Self {
+            Choice(self.0.clone())
+        }
     }
 }

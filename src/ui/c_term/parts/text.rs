@@ -32,7 +32,7 @@ impl Text {
     }
     pub fn draw(&self, r: &mut Rect) {
         for (i, ch) in self.val.chars().enumerate() {
-            r.add_at(
+            r.imprint_at(
                 (self.start.0 + i as u16, self.start.1),
                 ch,
                 &self.style_mods,

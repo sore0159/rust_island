@@ -61,8 +61,9 @@ pub struct WidgetState(WidgetStateBuilder);
 
 impl WidgetState {
     pub fn write_flush_full(&mut self, s: &mut crate::ui::c_term::Stdout) -> anyhow::Result<()> {
-        for w in &mut self.0.widgets {
+        for (i, w) in self.0.widgets.iter_mut().enumerate() {
             w.queue_write(s)?;
+            self.0.changed[i] = false;
         }
         s.flush()?;
         Ok(())
@@ -89,7 +90,11 @@ use crate::state::{self, Trans};
 
 impl state::State<state::Canvas, state::Data, state::Event> for WidgetState {
     fn on_start(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
-        self.write_flush(&mut canvas.stdout).unwrap();
+        self.write_flush_full(&mut canvas.stdout).unwrap();
+        Trans::None
+    }
+    fn on_resume(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
+        self.write_flush_full(&mut canvas.stdout).unwrap();
         Trans::None
     }
     fn on_cycle(&mut self, _data: &mut state::Data, canvas: &mut state::Canvas) -> Trans {
